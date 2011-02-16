@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="MedicalIS" Class="MedicalISDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="AppSettings" ConnectionString="Data Source=CURAWS05;Initial Catalog=MedicalIS;Integrated Security=True" SettingsObjectName="server.Properties.Settings" SettingsPropertyName="MedicalISConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.Patient" Member="Patients">
+    <Type Name="Patient">
+      <Column Name="PatientId" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="ExternalPatientID" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="FirstName" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="LastName" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="BirthDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="Gender" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="RootStoragePath" Type="System.String" DbType="NVarChar(512)" CanBeNull="true" />
+      <Column Name="CreatedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="SenderId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="Species" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Castrated" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+      <Column Name="OwnerId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="Title" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Project" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Breed" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="BreedExternalIdType" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="BreedExternalId" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="BreedName" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="BreedBookNumber" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="BirthdateNotExact" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+      <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" UpdateCheck="Never" />
+      <Association Name="Patient_Study" Member="Studies" ThisKey="PatientId" OtherKey="PatientId" Type="Study" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Study" Member="Studies">
+    <Type Name="Study">
+      <Column Name="StudyId" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="ExternalStudyID" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="Description" Type="System.String" DbType="NVarChar(1000)" CanBeNull="true" />
+      <Column Name="PerformedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="PatientId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="[Index]" Member="Index" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="StudyInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="RootStoragePath" Type="System.String" DbType="NVarChar(512)" CanBeNull="true" />
+      <Column Name="CreatedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="Comment" Type="System.String" DbType="NText" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="ModalityAggregation" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="SenderId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="AccessionNumber" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="OtherPatientId" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="NameOfPhysiciansReadingStudy" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Veterinarian" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Technician" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="ReferringPhysiciansName" Type="System.String" DbType="NVarChar(200)" CanBeNull="true" />
+      <Column Name="AssignedDocumentCollectionId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="LastChangedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="Patient_Study" Member="Patient" ThisKey="PatientId" OtherKey="PatientId" Type="Patient" IsForeignKey="true" />
+    </Type>
+  </Table>
+</Database>

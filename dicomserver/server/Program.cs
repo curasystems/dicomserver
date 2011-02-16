@@ -56,11 +56,11 @@ namespace server
         {
             IPEndPoint ipEndpoint = Socket.RemoteEndPoint as IPEndPoint;
 
-            //if (ipEndpoint != null)
-            //{
-            //    if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.2.53")) )
-            //        this.ThrottleSpeed = 10;
-            //}
+            if (ipEndpoint != null)
+            {
+                if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.1.155")))
+                    this.ThrottleSpeed = 10;
+            }
 
             base.OnInitializeNetwork();
         }
@@ -136,46 +136,152 @@ namespace server
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset dataset)
         {
             Trace.WriteLine(dataset.Dump());
-
+ 
             string queryLevel = dataset.GetString(DicomTags.QueryRetrieveLevel, null);
 
-            var file = new DicomFileFormat();
-            //file.Load("Ct.dcm", DicomTags.PixelData, DicomReadOptions.None);
-            file.Load("Ct.dcm", DicomReadOptions.None);
 
-            
+            MedicalISDataContext MedicalIS = new MedicalISDataContext();
 
-            //var pixelData = new DcmPixelData(file.Dataset);
-            //var frameData = pixelData.GetFrameDataU16(0);
+            string lPatientID = dataset.GetElement(DicomTags.PatientID).GetValueString();
 
-            //var data = new GrayscalePixelDataU16(pixelData.ImageWidth, pixelData.ImageHeight, frameData);
-            //var lut = WindowLevel.FromDataset(file.Dataset);
+            string lPatientName = dataset.GetElement(DicomTags.PatientsName).GetValueString();
 
-            //var g = new ImageGraphic(data);
-            //var i = g.RenderImage( new ( pixelData.MinimumDataValue, pixelData.MaximumDataValue, lut[0] ));
-            //i.Save("test.jpg");
-            
+            lPatientName = PrepareDicomName(lPatientName);
 
-            var response = file.Dataset;
-            response.Remove(DicomTags.PixelData);
-            response.AddElementWithValueString(DicomTags.RetrieveAETitle, "CURAPACS");
+            string lFirstName = "";
+            string lLastName = "";
+            string[] lName = lPatientName.Split('^');
 
-            if ( queryLevel == "STUDY")
-            { 
-                var d = dataset.GetElement(DicomTags.StudyDate);
-                var t = dataset.GetElement(DicomTags.StudyTime);
+            if (lName != null)
+            {
+                try
+                {
+                    lFirstName = lName[0];
+                    lLastName = lName[1];
+                }
+                catch (Exception ex)
+                { 
+                
+                }
+            }
 
-                //var rangeQuery = new DateTimeRangeQuery(d.GetValueString(), t.GetValueString());
+          
+
+            var patients = from p in MedicalIS.Patients
+                           where p.ExternalPatientID.StartsWith(lPatientID)
+                           && p.FirstName.StartsWith(lFirstName)
+                           && p.LastName.StartsWith(lLastName)
+                           select p;
+
+            var response = new DcmDataset();
+
+            if (queryLevel == "STUDY")
+            {
+
+                string lStudyDate = dataset.GetElement(DicomTags.StudyDate).GetValueString();
+                string[] lStudyDateRange = lStudyDate.Split('-');
+
+                string lStudyStart = "18000101";
+                string lStudyEnd = "29990101";
+
+                if (lStudyDateRange != null)
+                {
+                    try
+                    {
+                        lStudyStart = lStudyDateRange[0];
+                        lStudyEnd = lStudyDateRange[1];
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
 
                 
-                //var response = new DcmDataset(DicomTransferSyntax.ExplicitVRLittleEndian);
-                response.AddElementWithValue( DicomTags.NumberOfStudyRelatedSeries, 1 );
-                response.AddElementWithValue( DicomTags.NumberOfStudyRelatedInstances, 1);
-            
-                SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
 
-                //response.StudyInstanceUID = "2.233.45345.234234.234234.234";
+                foreach (var currentPatient in patients)
+                {
+
+                     var studies = from study in MedicalIS.Studies
+                                  where study.PatientId == currentPatient.PatientId
+                                  && (study.CreatedDateTime >= DateTime.Parse(lStudyStart) && study.CreatedDateTime <= DateTime.Parse(lStudyEnd))
+                                  select study;
+
+                     if (studies != null)
+                     {
+                         foreach (var currentStudy in studies)
+                         {
+                             response = dataset;
+                             response.AddElementWithValueString(DicomTags.RetrieveAETitle, "CURAPACS");
+                             response.AddElementWithValueString(DicomTags.PatientID, currentPatient.ExternalPatientID);
+                             response.AddElementWithValueString(DicomTags.PatientsName, currentPatient.FirstName + "^" + currentPatient.LastName);
+                             
+                             response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, 1 );
+                             response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, 1);
+
+                             SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
+                     
+                         }
+                     }
+
+                }
             }
+
+
+            //var lStudyDate = dataset.GetElement(DicomTags.StudyDate);
+            //string studyDate = lStudyDate.GetValueString();
+            //var lStudyTime = dataset.GetElement(DicomTags.StudyTime);
+            //string studyTime = lStudyTime.GetValueString();
+            //var lAccessionNumber = dataset.GetElement(DicomTags.AccessionNumber);
+            //string accessionNumber = lAccessionNumber.GetValueString();
+            //var lQueryRetrieve = dataset.GetElement(DicomTags.QueryRetrieveLevel);
+            //string queryRetrieve = lQueryRetrieve.GetValueString();
+            //var lModalitiesInStudy = dataset.GetElement(DicomTags.ModalitiesInStudy);
+            //string modalitiesInStudy = lModalitiesInStudy.GetValueString();
+            //var lReferringPhysician = dataset.GetElement(DicomTags.ReferringPhysiciansName);
+            //string referringPhysician = lReferringPhysician.GetValueString();
+            //var lStudyDescription = dataset.GetElement(DicomTags.StudyDescription);
+            //string studyDescription = lStudyDescription.GetValueString();
+            //var lInstitutionalDescription = dataset.GetElement(DicomTags.InstitutionName);
+            //string institutionalDescription = lInstitutionalDescription.GetValueString();
+            //var lPatientName = dataset.GetElement(DicomTags.PatientsName);
+            //string patientName = lPatientName.GetValueString();
+            //var lPatientId = dataset.GetElement(DicomTags.PatientID);
+            //string patientId = lPatientId.GetValueString();
+            //var lPatientsBirthdate = dataset.GetElement(DicomTags.PatientsBirthDate);
+            //string patientBirthdate = lPatientsBirthdate.GetValueString();
+            //var lPatientsSex = dataset.GetElement(DicomTags.PatientsSex);
+            //string patientsSex = lPatientsSex.GetValueString();
+            //var lStudyInstance = dataset.GetElement(DicomTags.StudyInstanceUID);
+            //string studyInstance = lStudyInstance.GetValueString();
+            //var lStudyId = dataset.GetElement(DicomTags.StudyID);
+            //string studyId = lStudyId.GetValueString();
+            
+
+         
+            
+
+            //if ( queryLevel == "STUDY")
+            //{ 
+
+
+
+
+            //    var d = dataset.GetElement(DicomTags.StudyDate);
+            //    var t = dataset.GetElement(DicomTags.StudyTime);
+
+            //    //var rangeQuery = new DateTimeRangeQuery(d.GetValueString(), t.GetValueString());
+
+                
+            //    //var response = new DcmDataset(DicomTransferSyntax.ExplicitVRLittleEndian);
+            //    response.AddElementWithValue( DicomTags.NumberOfStudyRelatedSeries, 1 );
+            //    response.AddElementWithValue( DicomTags.NumberOfStudyRelatedInstances, 1);
+                
+            
+                
+
+            //    //response.StudyInstanceUID = "2.233.45345.234234.234234.234";
+            //}
             else if (queryLevel == "SERIES")
             {
                 SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
@@ -184,6 +290,14 @@ namespace server
             }
 
             SendCFindResponse(presentationID, messageID, DcmStatus.Success);
+        }
+
+        private static string PrepareDicomName(string lPatientName)
+        {
+            lPatientName = lPatientName.Replace("[", "");
+            lPatientName = lPatientName.Replace("]", "");
+            lPatientName = lPatientName.Replace("*", "");
+            return lPatientName;
         }
 
         protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset dataset)
