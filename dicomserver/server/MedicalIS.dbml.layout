@@ -27,7 +27,7 @@
         <elementListCompartment Id="ec5f0960-34e2-4262-9628-54c8be5aa385" absoluteBounds="9.515, 5.335, 1.9700000000000002, 3.518513997395833" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
       </nestedChildShapes>
     </classShape>
-    <associationConnector edgePoints="[(7.5 : 7.53925699869792); (9.5 : 7.53925699869792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(7.5 : 7.53925699869792); (9.5 : 7.53925699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/MedicalISDataContext/Study/Study_Series" />
       <nodes>
         <classShapeMoniker Id="248aba35-8d56-4440-9f4a-6958d3b21e23" />
@@ -40,7 +40,7 @@
         <elementListCompartment Id="ed9cd019-913a-46d6-89ad-c4a3e1620734" absoluteBounds="13.64, 4.96, 1.9700000000000002, 5.0569254557291661" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
       </nestedChildShapes>
     </classShape>
-    <associationConnector edgePoints="[(11.5 : 6.91425699869792); (13.625 : 6.91425699869792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(11.5 : 6.91425699869792); (13.625 : 6.91425699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/MedicalISDataContext/Series/Series_Image" />
       <nodes>
         <classShapeMoniker Id="26d7fd3f-f69e-4909-a9ce-00c81dafb86c" />

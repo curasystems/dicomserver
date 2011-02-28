@@ -46,9 +46,9 @@ namespace server.Properties {
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
         [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.\\;Initial Catalog=MedicalIS;Integrated Security=True;Connect Timeout" +
             "=5")]
-        public string MedicalISConnectionString1 {
+        public string MedicalISConnectionString {
             get {
-                return ((string)(this["MedicalISConnectionString1"]));
+                return ((string)(this["MedicalISConnectionString"]));
             }
         }
         

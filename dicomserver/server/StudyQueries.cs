@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Dicom.Data;
+using System.Data.Linq.SqlClient;
 
 namespace server
 {
@@ -14,8 +15,11 @@ namespace server
         {
             var studies = from s in database.Studies select s;
 
-            studies = studies.Where(FilterByStudyDate(query));
-            studies = studies.Where(FilterByAccessionNumber(query));
+            studies = studies.Where( FilterByStudyDate(query) );
+            studies = studies.Where( FilterByAccessionNumber(query) );
+            
+            
+            studies = studies.Where( FilterByModality(query) );
 
             studies.OrderByDescending(s => s.PerformedDateTime);
 
@@ -63,13 +67,31 @@ namespace server
                 return s => s.AccessionNumber == valueString;
         }
 
-        private string Get(string valueToParse, string defaultValue)
-        {
-            if (String.IsNullOrWhiteSpace(valueToParse))
-                return defaultValue;
 
-            return valueToParse;
+        private static Expression<Func<Study, bool>> FilterByModality(DcmDataset query)
+        {
+            Expression<Func<Study, bool>> allMatch = p => true;
+
+            var studyQuery = query.GetElement(DicomTags.ModalitiesInStudy);
+
+            if (studyQuery == null)
+                return allMatch;
+
+            var valueString = studyQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            var modalities = valueString.Replace(@"\\", @"\").Split('\\');
+
+            if (modalities.Length == 1)
+            {
+                return s => s.ModalityAggregation.Contains(modalities[0]);
+            }
+            else
+            {
+                return s => s.Series.Any( series => modalities.Contains(series.PerformedModalityType));
+            }
         }
-        
     }
 }

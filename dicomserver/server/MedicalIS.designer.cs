@@ -45,7 +45,7 @@ namespace server
     #endregion
 		
 		public MedicalISDataContext() : 
-				base(global::server.Properties.Settings.Default.MedicalISConnectionString1, mappingSource)
+				base(global::server.Properties.Settings.Default.MedicalISConnectionString, mappingSource)
 		{
 			OnCreated();
 		}
