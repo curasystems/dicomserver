@@ -181,7 +181,10 @@ namespace server
                     {
                         var p = currentStudy.Patient;
 
-                        var response = new DcmDataset();
+                        var response = new DcmDataset
+                                           {
+                                               SpecificCharacterSetEncoding = query.SpecificCharacterSetEncoding
+                                           };
 
                         // Map saved study tags to output
 
