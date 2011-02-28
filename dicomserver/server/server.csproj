@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AEInfo.cs" />
     <Compile Include="DateTimeRangeQuery.cs" />
     <Compile Include="MedicalIS.designer.cs">
       <AutoGen>True</AutoGen>

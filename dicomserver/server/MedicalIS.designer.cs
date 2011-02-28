@@ -39,6 +39,9 @@ namespace server
     partial void InsertSeries(Series instance);
     partial void UpdateSeries(Series instance);
     partial void DeleteSeries(Series instance);
+    partial void InsertImage(Image instance);
+    partial void UpdateImage(Image instance);
+    partial void DeleteImage(Image instance);
     #endregion
 		
 		public MedicalISDataContext() : 
@@ -92,6 +95,14 @@ namespace server
 			get
 			{
 				return this.GetTable<Series>();
+			}
+		}
+		
+		public System.Data.Linq.Table<Image> Images
+		{
+			get
+			{
+				return this.GetTable<Image>();
 			}
 		}
 	}
@@ -1317,6 +1328,8 @@ namespace server
 		
 		private System.Nullable<System.DateTime> _LastChangedDateTime;
 		
+		private EntitySet<Image> _Images;
+		
 		private EntityRef<Study> _Study;
 		
     #region Extensibility Method Definitions
@@ -1361,6 +1374,7 @@ namespace server
 		
 		public Series()
 		{
+			this._Images = new EntitySet<Image>(new Action<Image>(this.attach_Images), new Action<Image>(this.detach_Images));
 			this._Study = default(EntityRef<Study>);
 			OnCreated();
 		}
@@ -1709,6 +1723,19 @@ namespace server
 			}
 		}
 		
+		[global::System.Data.Linq.Mapping.AssociationAttribute(Name="Series_Image", Storage="_Images", ThisKey="SeriesId", OtherKey="SeriesId")]
+		public EntitySet<Image> Images
+		{
+			get
+			{
+				return this._Images;
+			}
+			set
+			{
+				this._Images.Assign(value);
+			}
+		}
+		
 		[global::System.Data.Linq.Mapping.AssociationAttribute(Name="Study_Series", Storage="_Study", ThisKey="StudyId", OtherKey="StudyId", IsForeignKey=true)]
 		public Study Study
 		{
@@ -1739,6 +1766,697 @@ namespace server
 						this._StudyId = default(Nullable<System.Guid>);
 					}
 					this.SendPropertyChanged("Study");
+				}
+			}
+		}
+		
+		public event PropertyChangingEventHandler PropertyChanging;
+		
+		public event PropertyChangedEventHandler PropertyChanged;
+		
+		protected virtual void SendPropertyChanging()
+		{
+			if ((this.PropertyChanging != null))
+			{
+				this.PropertyChanging(this, emptyChangingEventArgs);
+			}
+		}
+		
+		protected virtual void SendPropertyChanged(String propertyName)
+		{
+			if ((this.PropertyChanged != null))
+			{
+				this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+			}
+		}
+		
+		private void attach_Images(Image entity)
+		{
+			this.SendPropertyChanging();
+			entity.Series = this;
+		}
+		
+		private void detach_Images(Image entity)
+		{
+			this.SendPropertyChanging();
+			entity.Series = null;
+		}
+	}
+	
+	[global::System.Data.Linq.Mapping.TableAttribute(Name="dbo.Image")]
+	public partial class Image : INotifyPropertyChanging, INotifyPropertyChanged
+	{
+		
+		private static PropertyChangingEventArgs emptyChangingEventArgs = new PropertyChangingEventArgs(String.Empty);
+		
+		private System.Guid _ImageId;
+		
+		private System.Nullable<int> _SortIndex;
+		
+		private string _ImageInstanceUid;
+		
+		private string _SeriesInstanceUid;
+		
+		private string _StudyInstanceUid;
+		
+		private string _ArchivedStorageLocation;
+		
+		private short _DicomObjectType;
+		
+		private string _ExternalImageId;
+		
+		private System.Nullable<System.Guid> _SeriesId;
+		
+		private System.Nullable<System.DateTime> _CreatedDateTime;
+		
+		private string _SopClassUid;
+		
+		private System.Nullable<System.DateTime> _AcquiredDateTime;
+		
+		private string _PixelPresentation;
+		
+		private string _AcquisitionNumber;
+		
+		private string _InstanceNumber;
+		
+		private string _ItemNumber;
+		
+		private string _Comment;
+		
+		private string _SamplesPerPixel;
+		
+		private System.Nullable<int> _PixelRows;
+		
+		private System.Nullable<int> _PixelColumns;
+		
+		private string _Title;
+		
+		private System.Xml.Linq.XElement _Properties;
+		
+		private string _ReferencedImages;
+		
+		private System.Nullable<long> _TotalSize;
+		
+		private System.Nullable<byte> _BitsStored;
+		
+		private EntityRef<Series> _Series;
+		
+    #region Extensibility Method Definitions
+    partial void OnLoaded();
+    partial void OnValidate(System.Data.Linq.ChangeAction action);
+    partial void OnCreated();
+    partial void OnImageIdChanging(System.Guid value);
+    partial void OnImageIdChanged();
+    partial void OnSortIndexChanging(System.Nullable<int> value);
+    partial void OnSortIndexChanged();
+    partial void OnImageInstanceUidChanging(string value);
+    partial void OnImageInstanceUidChanged();
+    partial void OnSeriesInstanceUidChanging(string value);
+    partial void OnSeriesInstanceUidChanged();
+    partial void OnStudyInstanceUidChanging(string value);
+    partial void OnStudyInstanceUidChanged();
+    partial void OnArchivedStorageLocationChanging(string value);
+    partial void OnArchivedStorageLocationChanged();
+    partial void OnDicomObjectTypeChanging(short value);
+    partial void OnDicomObjectTypeChanged();
+    partial void OnExternalImageIdChanging(string value);
+    partial void OnExternalImageIdChanged();
+    partial void OnSeriesIdChanging(System.Nullable<System.Guid> value);
+    partial void OnSeriesIdChanged();
+    partial void OnCreatedDateTimeChanging(System.Nullable<System.DateTime> value);
+    partial void OnCreatedDateTimeChanged();
+    partial void OnSopClassUidChanging(string value);
+    partial void OnSopClassUidChanged();
+    partial void OnAcquiredDateTimeChanging(System.Nullable<System.DateTime> value);
+    partial void OnAcquiredDateTimeChanged();
+    partial void OnPixelPresentationChanging(string value);
+    partial void OnPixelPresentationChanged();
+    partial void OnAcquisitionNumberChanging(string value);
+    partial void OnAcquisitionNumberChanged();
+    partial void OnInstanceNumberChanging(string value);
+    partial void OnInstanceNumberChanged();
+    partial void OnItemNumberChanging(string value);
+    partial void OnItemNumberChanged();
+    partial void OnCommentChanging(string value);
+    partial void OnCommentChanged();
+    partial void OnSamplesPerPixelChanging(string value);
+    partial void OnSamplesPerPixelChanged();
+    partial void OnPixelRowsChanging(System.Nullable<int> value);
+    partial void OnPixelRowsChanged();
+    partial void OnPixelColumnsChanging(System.Nullable<int> value);
+    partial void OnPixelColumnsChanged();
+    partial void OnTitleChanging(string value);
+    partial void OnTitleChanged();
+    partial void OnPropertiesChanging(System.Xml.Linq.XElement value);
+    partial void OnPropertiesChanged();
+    partial void OnReferencedImagesChanging(string value);
+    partial void OnReferencedImagesChanged();
+    partial void OnTotalSizeChanging(System.Nullable<long> value);
+    partial void OnTotalSizeChanged();
+    partial void OnBitsStoredChanging(System.Nullable<byte> value);
+    partial void OnBitsStoredChanged();
+    #endregion
+		
+		public Image()
+		{
+			this._Series = default(EntityRef<Series>);
+			OnCreated();
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ImageId", DbType="UniqueIdentifier NOT NULL", IsPrimaryKey=true)]
+		public System.Guid ImageId
+		{
+			get
+			{
+				return this._ImageId;
+			}
+			set
+			{
+				if ((this._ImageId != value))
+				{
+					this.OnImageIdChanging(value);
+					this.SendPropertyChanging();
+					this._ImageId = value;
+					this.SendPropertyChanged("ImageId");
+					this.OnImageIdChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_SortIndex", DbType="Int")]
+		public System.Nullable<int> SortIndex
+		{
+			get
+			{
+				return this._SortIndex;
+			}
+			set
+			{
+				if ((this._SortIndex != value))
+				{
+					this.OnSortIndexChanging(value);
+					this.SendPropertyChanging();
+					this._SortIndex = value;
+					this.SendPropertyChanged("SortIndex");
+					this.OnSortIndexChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ImageInstanceUid", DbType="NVarChar(100)")]
+		public string ImageInstanceUid
+		{
+			get
+			{
+				return this._ImageInstanceUid;
+			}
+			set
+			{
+				if ((this._ImageInstanceUid != value))
+				{
+					this.OnImageInstanceUidChanging(value);
+					this.SendPropertyChanging();
+					this._ImageInstanceUid = value;
+					this.SendPropertyChanged("ImageInstanceUid");
+					this.OnImageInstanceUidChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_SeriesInstanceUid", DbType="NVarChar(100)")]
+		public string SeriesInstanceUid
+		{
+			get
+			{
+				return this._SeriesInstanceUid;
+			}
+			set
+			{
+				if ((this._SeriesInstanceUid != value))
+				{
+					this.OnSeriesInstanceUidChanging(value);
+					this.SendPropertyChanging();
+					this._SeriesInstanceUid = value;
+					this.SendPropertyChanged("SeriesInstanceUid");
+					this.OnSeriesInstanceUidChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_StudyInstanceUid", DbType="NVarChar(100)")]
+		public string StudyInstanceUid
+		{
+			get
+			{
+				return this._StudyInstanceUid;
+			}
+			set
+			{
+				if ((this._StudyInstanceUid != value))
+				{
+					this.OnStudyInstanceUidChanging(value);
+					this.SendPropertyChanging();
+					this._StudyInstanceUid = value;
+					this.SendPropertyChanged("StudyInstanceUid");
+					this.OnStudyInstanceUidChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ArchivedStorageLocation", DbType="NVarChar(512)")]
+		public string ArchivedStorageLocation
+		{
+			get
+			{
+				return this._ArchivedStorageLocation;
+			}
+			set
+			{
+				if ((this._ArchivedStorageLocation != value))
+				{
+					this.OnArchivedStorageLocationChanging(value);
+					this.SendPropertyChanging();
+					this._ArchivedStorageLocation = value;
+					this.SendPropertyChanged("ArchivedStorageLocation");
+					this.OnArchivedStorageLocationChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_DicomObjectType", DbType="SmallInt NOT NULL")]
+		public short DicomObjectType
+		{
+			get
+			{
+				return this._DicomObjectType;
+			}
+			set
+			{
+				if ((this._DicomObjectType != value))
+				{
+					this.OnDicomObjectTypeChanging(value);
+					this.SendPropertyChanging();
+					this._DicomObjectType = value;
+					this.SendPropertyChanged("DicomObjectType");
+					this.OnDicomObjectTypeChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ExternalImageId", DbType="NVarChar(20)")]
+		public string ExternalImageId
+		{
+			get
+			{
+				return this._ExternalImageId;
+			}
+			set
+			{
+				if ((this._ExternalImageId != value))
+				{
+					this.OnExternalImageIdChanging(value);
+					this.SendPropertyChanging();
+					this._ExternalImageId = value;
+					this.SendPropertyChanged("ExternalImageId");
+					this.OnExternalImageIdChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_SeriesId", DbType="UniqueIdentifier")]
+		public System.Nullable<System.Guid> SeriesId
+		{
+			get
+			{
+				return this._SeriesId;
+			}
+			set
+			{
+				if ((this._SeriesId != value))
+				{
+					if (this._Series.HasLoadedOrAssignedValue)
+					{
+						throw new System.Data.Linq.ForeignKeyReferenceAlreadyHasValueException();
+					}
+					this.OnSeriesIdChanging(value);
+					this.SendPropertyChanging();
+					this._SeriesId = value;
+					this.SendPropertyChanged("SeriesId");
+					this.OnSeriesIdChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_CreatedDateTime", DbType="DateTime")]
+		public System.Nullable<System.DateTime> CreatedDateTime
+		{
+			get
+			{
+				return this._CreatedDateTime;
+			}
+			set
+			{
+				if ((this._CreatedDateTime != value))
+				{
+					this.OnCreatedDateTimeChanging(value);
+					this.SendPropertyChanging();
+					this._CreatedDateTime = value;
+					this.SendPropertyChanged("CreatedDateTime");
+					this.OnCreatedDateTimeChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_SopClassUid", DbType="NVarChar(20)")]
+		public string SopClassUid
+		{
+			get
+			{
+				return this._SopClassUid;
+			}
+			set
+			{
+				if ((this._SopClassUid != value))
+				{
+					this.OnSopClassUidChanging(value);
+					this.SendPropertyChanging();
+					this._SopClassUid = value;
+					this.SendPropertyChanged("SopClassUid");
+					this.OnSopClassUidChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_AcquiredDateTime", DbType="DateTime")]
+		public System.Nullable<System.DateTime> AcquiredDateTime
+		{
+			get
+			{
+				return this._AcquiredDateTime;
+			}
+			set
+			{
+				if ((this._AcquiredDateTime != value))
+				{
+					this.OnAcquiredDateTimeChanging(value);
+					this.SendPropertyChanging();
+					this._AcquiredDateTime = value;
+					this.SendPropertyChanged("AcquiredDateTime");
+					this.OnAcquiredDateTimeChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_PixelPresentation", DbType="NVarChar(20)")]
+		public string PixelPresentation
+		{
+			get
+			{
+				return this._PixelPresentation;
+			}
+			set
+			{
+				if ((this._PixelPresentation != value))
+				{
+					this.OnPixelPresentationChanging(value);
+					this.SendPropertyChanging();
+					this._PixelPresentation = value;
+					this.SendPropertyChanged("PixelPresentation");
+					this.OnPixelPresentationChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_AcquisitionNumber", DbType="NVarChar(20)")]
+		public string AcquisitionNumber
+		{
+			get
+			{
+				return this._AcquisitionNumber;
+			}
+			set
+			{
+				if ((this._AcquisitionNumber != value))
+				{
+					this.OnAcquisitionNumberChanging(value);
+					this.SendPropertyChanging();
+					this._AcquisitionNumber = value;
+					this.SendPropertyChanged("AcquisitionNumber");
+					this.OnAcquisitionNumberChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_InstanceNumber", DbType="NVarChar(20)")]
+		public string InstanceNumber
+		{
+			get
+			{
+				return this._InstanceNumber;
+			}
+			set
+			{
+				if ((this._InstanceNumber != value))
+				{
+					this.OnInstanceNumberChanging(value);
+					this.SendPropertyChanging();
+					this._InstanceNumber = value;
+					this.SendPropertyChanged("InstanceNumber");
+					this.OnInstanceNumberChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ItemNumber", DbType="NVarChar(20)")]
+		public string ItemNumber
+		{
+			get
+			{
+				return this._ItemNumber;
+			}
+			set
+			{
+				if ((this._ItemNumber != value))
+				{
+					this.OnItemNumberChanging(value);
+					this.SendPropertyChanging();
+					this._ItemNumber = value;
+					this.SendPropertyChanged("ItemNumber");
+					this.OnItemNumberChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_Comment", DbType="NVarChar(20)")]
+		public string Comment
+		{
+			get
+			{
+				return this._Comment;
+			}
+			set
+			{
+				if ((this._Comment != value))
+				{
+					this.OnCommentChanging(value);
+					this.SendPropertyChanging();
+					this._Comment = value;
+					this.SendPropertyChanged("Comment");
+					this.OnCommentChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_SamplesPerPixel", DbType="NVarChar(20)")]
+		public string SamplesPerPixel
+		{
+			get
+			{
+				return this._SamplesPerPixel;
+			}
+			set
+			{
+				if ((this._SamplesPerPixel != value))
+				{
+					this.OnSamplesPerPixelChanging(value);
+					this.SendPropertyChanging();
+					this._SamplesPerPixel = value;
+					this.SendPropertyChanged("SamplesPerPixel");
+					this.OnSamplesPerPixelChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_PixelRows", DbType="Int")]
+		public System.Nullable<int> PixelRows
+		{
+			get
+			{
+				return this._PixelRows;
+			}
+			set
+			{
+				if ((this._PixelRows != value))
+				{
+					this.OnPixelRowsChanging(value);
+					this.SendPropertyChanging();
+					this._PixelRows = value;
+					this.SendPropertyChanged("PixelRows");
+					this.OnPixelRowsChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_PixelColumns", DbType="Int")]
+		public System.Nullable<int> PixelColumns
+		{
+			get
+			{
+				return this._PixelColumns;
+			}
+			set
+			{
+				if ((this._PixelColumns != value))
+				{
+					this.OnPixelColumnsChanging(value);
+					this.SendPropertyChanging();
+					this._PixelColumns = value;
+					this.SendPropertyChanged("PixelColumns");
+					this.OnPixelColumnsChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_Title", DbType="NVarChar(50)")]
+		public string Title
+		{
+			get
+			{
+				return this._Title;
+			}
+			set
+			{
+				if ((this._Title != value))
+				{
+					this.OnTitleChanging(value);
+					this.SendPropertyChanging();
+					this._Title = value;
+					this.SendPropertyChanged("Title");
+					this.OnTitleChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_Properties", DbType="Xml", UpdateCheck=UpdateCheck.Never)]
+		public System.Xml.Linq.XElement Properties
+		{
+			get
+			{
+				return this._Properties;
+			}
+			set
+			{
+				if ((this._Properties != value))
+				{
+					this.OnPropertiesChanging(value);
+					this.SendPropertyChanging();
+					this._Properties = value;
+					this.SendPropertyChanged("Properties");
+					this.OnPropertiesChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_ReferencedImages", DbType="NText", UpdateCheck=UpdateCheck.Never)]
+		public string ReferencedImages
+		{
+			get
+			{
+				return this._ReferencedImages;
+			}
+			set
+			{
+				if ((this._ReferencedImages != value))
+				{
+					this.OnReferencedImagesChanging(value);
+					this.SendPropertyChanging();
+					this._ReferencedImages = value;
+					this.SendPropertyChanged("ReferencedImages");
+					this.OnReferencedImagesChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_TotalSize", DbType="BigInt")]
+		public System.Nullable<long> TotalSize
+		{
+			get
+			{
+				return this._TotalSize;
+			}
+			set
+			{
+				if ((this._TotalSize != value))
+				{
+					this.OnTotalSizeChanging(value);
+					this.SendPropertyChanging();
+					this._TotalSize = value;
+					this.SendPropertyChanged("TotalSize");
+					this.OnTotalSizeChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_BitsStored", DbType="TinyInt")]
+		public System.Nullable<byte> BitsStored
+		{
+			get
+			{
+				return this._BitsStored;
+			}
+			set
+			{
+				if ((this._BitsStored != value))
+				{
+					this.OnBitsStoredChanging(value);
+					this.SendPropertyChanging();
+					this._BitsStored = value;
+					this.SendPropertyChanged("BitsStored");
+					this.OnBitsStoredChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.AssociationAttribute(Name="Series_Image", Storage="_Series", ThisKey="SeriesId", OtherKey="SeriesId", IsForeignKey=true)]
+		public Series Series
+		{
+			get
+			{
+				return this._Series.Entity;
+			}
+			set
+			{
+				Series previousValue = this._Series.Entity;
+				if (((previousValue != value) 
+							|| (this._Series.HasLoadedOrAssignedValue == false)))
+				{
+					this.SendPropertyChanging();
+					if ((previousValue != null))
+					{
+						this._Series.Entity = null;
+						previousValue.Images.Remove(this);
+					}
+					this._Series.Entity = value;
+					if ((value != null))
+					{
+						value.Images.Add(this);
+						this._SeriesId = value.SeriesId;
+					}
+					else
+					{
+						this._SeriesId = default(Nullable<System.Guid>);
+					}
+					this.SendPropertyChanged("Series");
 				}
 			}
 		}

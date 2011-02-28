@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -16,6 +17,7 @@ using Dicom.Network;
 using Dicom.Network.Server;
 using Dicom.Network.Client;
 using System.Globalization;
+using server.Properties;
 
 namespace server
 {
@@ -35,9 +37,9 @@ namespace server
         static void Main(string[] args)
         {
             var server = new DcmServer<CImageServer>();
-            server.OnDicomClientCreated = (a, s, t) => { s.ThrottleSpeed = 0; };
+            //server.OnDicomClientCreated = (a, s, t) => { s.ThrottleSpeed = 0; };
 
-            server.AddPort(104,DcmSocketType.TCP);
+            server.AddPort(Settings.Default.ListenPort,DcmSocketType.TCP);
             server.Start();
 
             Console.WriteLine("Listening on 104");
@@ -56,13 +58,13 @@ namespace server
 
         protected override void OnInitializeNetwork()
         {
-            IPEndPoint ipEndpoint = Socket.RemoteEndPoint as IPEndPoint;
+            var ipEndpoint = Socket.RemoteEndPoint as IPEndPoint;
 
-            if (ipEndpoint != null)
-            {
-                if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.1.155")))
-                    this.ThrottleSpeed = 10;
-            }
+            //if (ipEndpoint != null)
+            //{
+            //    if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.1.155")))
+            //        this.ThrottleSpeed = 10;
+            //}
 
             base.OnInitializeNetwork();
         }
@@ -138,81 +140,82 @@ namespace server
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset query)
         {
             Trace.WriteLine(query.Dump());
- 
-            var database = new MedicalISDataContext();
 
-            
-            var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);
-            
-            if (queryLevel == "STUDY")
+            using( var database = new MedicalISDataContext() )
             {
-                IQueryable<Study> studies = GetMatchingStudies(database, query);
+                var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);
 
-                if( QueryHasPatientSpecificFilters(query) )
+                if (queryLevel == "STUDY")
                 {
-                    var matchingPatients = GetMatchingPatients(database, query);
-                    matchingPatients = matchingPatients.Take(500);
+                    IQueryable<Study> studies = GetMatchingStudies(database, query);
 
-                    studies = from study in studies
-                        join patient in matchingPatients
-                        on study.PatientId equals patient.PatientId
-                        select study;
-                }
+                    if (QueryHasPatientSpecificFilters(query))
+                    {
+                        var matchingPatients = GetMatchingPatients(database, query);
+                        matchingPatients = matchingPatients.Take(500);
 
-                studies = studies.Take(100);
-                
-                //string lStudyDate = query.GetElement(DicomTags.StudyDate).GetValueString();
-                //var lStudyDateRange = lStudyDate.Split(new [] {'-'},2);
-
-                //string lStudyStartAsString = "18000101";
-                //string lStudyEndAsString = "29990101";
-
-                //if (lStudyDateRange.Length > 0 )
-                //    lStudyStartAsString = GetDateString(lStudyDateRange[0], lStudyStartAsString);
-
-                //if( lStudyDateRange.Length > 1 )
-                //    lStudyEndAsString = GetDateString(lStudyDateRange[1], lStudyEndAsString);
-
-                //var studyFrom = DateTime.ParseExact(lStudyStartAsString, "yyyyMMdd", CultureInfo.InvariantCulture);
-                //var studyTo = DateTime.ParseExact(lStudyEndAsString, "yyyyMMdd", CultureInfo.InvariantCulture);)
-                
-                foreach (var currentStudy in studies)
-                {
-                    var p = currentStudy.Patient;
-
-                    var response = new DcmDataset();
-
-                    // Map saved study tags to output
-
-                    response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
-                    
-                    response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
-                    response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);    
-                    response.AddElementWithValue(DicomTags.PatientsBirthDate, p.BirthDateTime.Value);
-
-                    response.AddElementWithValue(DicomTags.StudyInstanceUID, currentStudy.StudyInstanceUid);
-                    response.AddElementWithValue(DicomTags.AccessionNumber, currentStudy.AccessionNumber);
-                    response.AddElementWithValue(DicomTags.StudyDescription, currentStudy.Description);
-                    response.AddElementWithValue(DicomTags.ModalitiesInStudy, currentStudy.ModalityAggregation);
-
-                    if (currentStudy.PerformedDateTime.HasValue)
-                    { 
-                        response.AddElementWithValue(DicomTags.StudyDate, currentStudy.PerformedDateTime.Value);
-                        response.AddElementWithValue(DicomTags.StudyTime, currentStudy.PerformedDateTime.Value);
+                        studies = from study in studies
+                                  join patient in matchingPatients
+                                      on study.PatientId equals patient.PatientId
+                                  select study;
                     }
 
-                    response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, currentStudy.Series.Count );
-                    //response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, 1);
-                    
-                    SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
-                }                    
-            }
-            else if (queryLevel == "SERIES")
-            {
-               // SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
-            }
+                    studies = studies.Take(100);
 
-            SendCFindResponse(presentationID, messageID, DcmStatus.Success);
+                    //string lStudyDate = query.GetElement(DicomTags.StudyDate).GetValueString();
+                    //var lStudyDateRange = lStudyDate.Split(new [] {'-'},2);
+
+                    //string lStudyStartAsString = "18000101";
+                    //string lStudyEndAsString = "29990101";
+
+                    //if (lStudyDateRange.Length > 0 )
+                    //    lStudyStartAsString = GetDateString(lStudyDateRange[0], lStudyStartAsString);
+
+                    //if( lStudyDateRange.Length > 1 )
+                    //    lStudyEndAsString = GetDateString(lStudyDateRange[1], lStudyEndAsString);
+
+                    //var studyFrom = DateTime.ParseExact(lStudyStartAsString, "yyyyMMdd", CultureInfo.InvariantCulture);
+                    //var studyTo = DateTime.ParseExact(lStudyEndAsString, "yyyyMMdd", CultureInfo.InvariantCulture);)
+
+                    foreach (var currentStudy in studies)
+                    {
+                        var p = currentStudy.Patient;
+
+                        var response = new DcmDataset();
+
+                        // Map saved study tags to output
+
+                        response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
+
+                        response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
+                        response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);
+                        response.AddElementWithValue(DicomTags.PatientsBirthDate, p.BirthDateTime.Value);
+
+                        response.AddElementWithValue(DicomTags.StudyInstanceUID, currentStudy.StudyInstanceUid);
+                        response.AddElementWithValue(DicomTags.AccessionNumber, currentStudy.AccessionNumber);
+                        response.AddElementWithValue(DicomTags.StudyDescription, currentStudy.Description);
+                        response.AddElementWithValue(DicomTags.ModalitiesInStudy, currentStudy.ModalityAggregation);
+
+                        if (currentStudy.PerformedDateTime.HasValue)
+                        {
+                            response.AddElementWithValue(DicomTags.StudyDate, currentStudy.PerformedDateTime.Value);
+                            response.AddElementWithValue(DicomTags.StudyTime, currentStudy.PerformedDateTime.Value);
+                        }
+
+                        response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, currentStudy.Series.Count);
+                        //response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, 1);
+
+                        SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
+                    }
+                }
+                else if (queryLevel == "SERIES")
+                {
+                    // SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
+                }
+
+                SendCFindResponse(presentationID, messageID, DcmStatus.Success);
+
+            }
         }
 
         private bool QueryHasPatientSpecificFilters(DcmDataset query)
@@ -382,83 +385,121 @@ namespace server
             return lPatientName;
         }
 
-        protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset dataset)
+        protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset query)
         {
-            dataset.Dump();
-            
-            var config = new ScuConfig();
+            query.Dump();
 
-            
-            var files = new List<string> {"ct.dcm "};
-            
-            var storeClient = new CStoreClient();
-            storeClient.CallingAE = "CURAPACS";
-            storeClient.CalledAE = destinationAE;
+            AEInfo recipientInfo = FindAE(destinationAE);
 
-            storeClient.PreferredTransferSyntax = DicomTransferSyntax.ImplicitVRLittleEndian;
-
-            foreach (var f in files)
+            if (recipientInfo == null)
             {
-                storeClient.AddFile(f);
+                SendCMoveResponse(presentationID, messageID, DcmStatus.QueryRetrieveMoveDestinationUnknown, 0, 0, 0, 0);
+                return;
             }
 
-            ushort totalImageCount = (ushort)files.Count;
-            ushort imagesProcessed = 0;
-            ushort errorCount = 0;
-            ushort successCount = 0;
+            using (var database = new MedicalISDataContext())
+            {
+                var storeClient = new CStoreClient();
+                storeClient.CallingAE = "CURAPACS";
+                storeClient.CalledAE = destinationAE;
 
-            storeClient.OnCStoreResponseReceived = (c, i) =>
-                                                        {
-                                                            if (i.Status == DcmStatus.Success)
-                                                                successCount++;
-                                                            else
-                                                                errorCount++;
+                storeClient.PreferredTransferSyntax = DicomTransferSyntax.ImplicitVRLittleEndian;
 
-                                                            imagesProcessed++;
+                var files = GetFilePaths(database, query);
+
+                foreach (var f in files)
+                {
+                    storeClient.AddFile(f);
+                }
+
+                ushort totalImageCount = (ushort)files.Count();
+                ushort imagesProcessed = 0;
+                ushort errorCount = 0;
+                ushort successCount = 0;
+
+                storeClient.OnCStoreResponseReceived = (c, i) =>
+                                                            {
+                                                                if (i.Status == DcmStatus.Success)
+                                                                    successCount++;
+                                                                else
+                                                                    errorCount++;
+
+                                                                imagesProcessed++;
                                                             
-                                                            SendCMoveResponse(presentationID, messageID, DcmStatus.Pending, (ushort)(totalImageCount-imagesProcessed), (ushort) successCount, 0, errorCount);
-                                     };
+                                                                SendCMoveResponse(presentationID, messageID, DcmStatus.Pending, (ushort)(totalImageCount-imagesProcessed), (ushort) successCount, 0, errorCount);
+                                         };
 
-            storeClient.OnCStoreRequestProgress = (c, i, p) =>
-                                                      {
-                                                          Console.WriteLine("{0}@{1}", p.BytesTransfered, c.Socket.LocalStats.ToString());
-                                                      };
+                storeClient.OnCStoreRequestProgress = (c, i, p) =>
+                                                          {
+                                                              Console.WriteLine("{0}@{1}", p.BytesTransfered, c.Socket.LocalStats.ToString());
+                                                          };
 
-            storeClient.Connect("192.168.2.53", 11112, DcmSocketType.TCP);
+                storeClient.Connect( recipientInfo.Ip, recipientInfo.Port, DcmSocketType.TCP);
 
-            if (storeClient.Wait())
-            {
+                if (storeClient.Wait())
+                {
                 
+                }
+
+                storeClient.Close();
+
+                SendCMoveResponse(presentationID, messageID, DcmStatus.Success, 0, imagesProcessed, 0, 0);
             }
 
-            storeClient.Close();
+        }
 
-            SendCMoveResponse(presentationID, messageID, DcmStatus.Success, 0, imagesProcessed, 0, 0);
+        private static AEInfo FindAE(string destinationAE)
+        {
+            var allAEs = Settings.Default.KnownAEs.Split(';');
+
+            foreach (var ae in allAEs)
+            {
+                string name = ae.Substring(0, ae.IndexOf('='));
+
+                if (name.ToLower() == destinationAE.ToLower())
+                { 
+                    string address = ae.Substring(ae.IndexOf('=') + 1);
+
+                    string ip = address;
+
+                    if (ip.Contains(':'))
+                        ip = ip.Substring(0, ip.IndexOf(':'));
+
+                    int port = 104;
+
+                    if (address.Contains(':'))
+                        port = int.Parse(address.Substring(address.IndexOf(':') + 1));
+
+                    return new AEInfo()
+                               {
+                                   Name = name,
+                                   Ip = ip,
+                                   Port = port
+                               };
+                }
+            }
+
+
+            return null;
+        }
+
+        private static IEnumerable<string> GetFilePaths(MedicalISDataContext database, DcmDataset query)
+        {
+            if (query.Elements.Any(e => e.Tag == DicomTags.StudyInstanceUID))
+            {
+                string studyInstanceUid = query.GetElement(DicomTags.StudyInstanceUID).GetValueString();
+
+                var imagePaths = from i in database.Images
+                               where i.Series.Study.StudyInstanceUid == studyInstanceUid
+                               select Path.Combine(Settings.Default.RootPath, i.ArchivedStorageLocation);
+
+                return imagePaths;
+            }
+            else
+            {
+                return new string[]{};
+            }
         }
     }
 
-    [Serializable]
-    public class ScuConfig
-    {
-        public string LocalAE = "TEST_SCU";
-        public string RemoteAE = "ANY-SCP";
-        public string RemoteHost = "localhost";
-        public int RemotePort = 104;
-        public uint MaxPdu = 16384;
-        public int Timeout = 30;
-        public int TransferSyntax = 0;
-        public int Quality = 90;
-        public bool UseTls = false;
-    }
-
-    public class Filter<T>
-    {
-        //public List<Expression<Func<T, Boolean>>>  Filters
-        //{
-        //    get
-        //    {
-                
-        //    }
-        //}
-    }
 }

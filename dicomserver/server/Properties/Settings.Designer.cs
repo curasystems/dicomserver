@@ -25,22 +25,39 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.;Initial Catalog=MedicalIS;Integrated Security=True")]
-        public string MedicalISConnectionString {
+        [global::System.Configuration.DefaultSettingValueAttribute("D:\\resources\\demostorage\\root")]
+        public string RootPath {
             get {
-                return ((string)(this["MedicalISConnectionString"]));
+                return ((string)(this["RootPath"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("test=192.168.2.53:11115;other=123.23.3.2:104;OsiriX-Test=192.168.2.53:11112")]
+        public string KnownAEs {
+            get {
+                return ((string)(this["KnownAEs"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=MATTHIAS-PC\\;Initial Catalog=MedicalIS;Integrated Security=True;Conne" +
-            "ct Timeout=5")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.\\;Initial Catalog=MedicalIS;Integrated Security=True;Connect Timeout" +
+            "=5")]
         public string MedicalISConnectionString1 {
             get {
                 return ((string)(this["MedicalISConnectionString1"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("104")]
+        public int ListenPort {
+            get {
+                return ((int)(this["ListenPort"]));
             }
         }
     }

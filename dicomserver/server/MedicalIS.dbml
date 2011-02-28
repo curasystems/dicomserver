@@ -72,7 +72,38 @@
       <Column Name="LastChangeStamp" Type="System.Data.Linq.Binary" DbType="rowversion" CanBeNull="true" IsVersion="true" />
       <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" />
       <Column Name="LastChangedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="Series_Image" Member="Images" ThisKey="SeriesId" OtherKey="SeriesId" Type="Image" />
       <Association Name="Study_Series" Member="Study" ThisKey="StudyId" OtherKey="StudyId" Type="Study" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Image" Member="Images">
+    <Type Name="Image">
+      <Column Name="ImageId" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="SortIndex" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="ImageInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="SeriesInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="StudyInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="ArchivedStorageLocation" Type="System.String" DbType="NVarChar(512)" CanBeNull="true" />
+      <Column Name="DicomObjectType" Type="System.Int16" DbType="SmallInt NOT NULL" CanBeNull="false" />
+      <Column Name="ExternalImageId" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="SeriesId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="CreatedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="SopClassUid" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="AcquiredDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="PixelPresentation" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="AcquisitionNumber" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="InstanceNumber" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="ItemNumber" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="Comment" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="SamplesPerPixel" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="PixelRows" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="PixelColumns" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="Title" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="ReferencedImages" Type="System.String" DbType="NText" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="TotalSize" Type="System.Int64" DbType="BigInt" CanBeNull="true" />
+      <Column Name="BitsStored" Type="System.Byte" DbType="TinyInt" CanBeNull="true" />
+      <Association Name="Series_Image" Member="Series" ThisKey="SeriesId" OtherKey="SeriesId" Type="Series" IsForeignKey="true" />
     </Type>
   </Table>
 </Database>
