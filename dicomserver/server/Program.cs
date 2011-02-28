@@ -397,6 +397,8 @@ namespace server
                 return;
             }
 
+            Console.Write("Moving to:" + recipientInfo.Name + "> ");
+
             using (var database = new MedicalISDataContext())
             {
                 var storeClient = new CStoreClient();
@@ -418,20 +420,27 @@ namespace server
                 ushort successCount = 0;
 
                 storeClient.OnCStoreResponseReceived = (c, i) =>
-                                                            {
-                                                                if (i.Status == DcmStatus.Success)
-                                                                    successCount++;
-                                                                else
-                                                                    errorCount++;
+                                                           {
 
-                                                                imagesProcessed++;
+                                                               if (i.Status == DcmStatus.Success)
+                                                               {
+                                                                   successCount++;
+                                                                   Console.Write(".");
+                                                               }
+                                                               else
+                                                               {
+                                                                   errorCount++;
+                                                                   Console.Write("x");
+                                                               }
+
+                                                               imagesProcessed++;
                                                             
-                                                                SendCMoveResponse(presentationID, messageID, DcmStatus.Pending, (ushort)(totalImageCount-imagesProcessed), (ushort) successCount, 0, errorCount);
-                                         };
+                                                               SendCMoveResponse(presentationID, messageID, DcmStatus.Pending, (ushort)(totalImageCount-imagesProcessed), (ushort) successCount, 0, errorCount);
+                                                          };
 
                 storeClient.OnCStoreRequestProgress = (c, i, p) =>
                                                           {
-                                                              Console.WriteLine("{0}@{1}", p.BytesTransfered, c.Socket.LocalStats.ToString());
+                                                              //Console.WriteLine("{0}@{1}", p.BytesTransfered, c.Socket.LocalStats.ToString());
                                                           };
 
                 storeClient.Connect( recipientInfo.Ip, recipientInfo.Port, DcmSocketType.TCP);
@@ -444,6 +453,9 @@ namespace server
                 storeClient.Close();
 
                 SendCMoveResponse(presentationID, messageID, DcmStatus.Success, 0, imagesProcessed, 0, 0);
+
+                Console.WriteLine("");
+                Console.WriteLine("Done.");
             }
 
         }
