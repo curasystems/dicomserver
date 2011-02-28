@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><Database Name="MedicalIS" Class="MedicalISDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
-  <Connection Mode="AppSettings" ConnectionString="Data Source=CURAWS05;Initial Catalog=MedicalIS;Integrated Security=True" SettingsObjectName="server.Properties.Settings" SettingsPropertyName="MedicalISConnectionString" Provider="System.Data.SqlClient" />
+  <Connection Mode="AppSettings" ConnectionString="Data Source=MATTHIAS-PC\;Initial Catalog=MedicalIS;Integrated Security=True;Connect Timeout=5" SettingsObjectName="server.Properties.Settings" SettingsPropertyName="MedicalISConnectionString1" Provider="System.Data.SqlClient" />
   <Table Name="dbo.Patient" Member="Patients">
     <Type Name="Patient">
       <Column Name="PatientId" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
@@ -49,7 +49,30 @@
       <Column Name="AssignedDocumentCollectionId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
       <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" UpdateCheck="Never" />
       <Column Name="LastChangedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="Study_Series" Member="Series" ThisKey="StudyId" OtherKey="StudyId" Type="Series" />
       <Association Name="Patient_Study" Member="Patient" ThisKey="PatientId" OtherKey="PatientId" Type="Patient" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Series" Member="Series">
+    <Type Name="Series">
+      <Column Name="SeriesId" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="SeriesNumber" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="Description" Type="System.String" DbType="NVarChar(1000)" CanBeNull="true" />
+      <Column Name="PerformedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="PerformedModalityType" Type="System.String" DbType="NVarChar(20)" CanBeNull="true" />
+      <Column Name="StudyId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="[Index]" Member="Index" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="SeriesInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="StudyInstanceUid" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="RootStoragePath" Type="System.String" DbType="NVarChar(512)" CanBeNull="true" />
+      <Column Name="CreatedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="SenderId" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="Veterinarian" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="Technician" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Column Name="LastChangeStamp" Type="System.Data.Linq.Binary" DbType="rowversion" CanBeNull="true" IsVersion="true" />
+      <Column Name="Properties" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" />
+      <Column Name="LastChangedDateTime" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="Study_Series" Member="Study" ThisKey="StudyId" OtherKey="StudyId" Type="Study" IsForeignKey="true" />
     </Type>
   </Table>
 </Database>
