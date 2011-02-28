@@ -147,11 +147,11 @@ namespace server
 
                 if (queryLevel == "STUDY")
                 {
-                    IQueryable<Study> studies = GetMatchingStudies(database, query);
+                    IQueryable<Study> studies = StudyQueries.GetMatchingStudies(database, query);
 
                     if (QueryHasPatientSpecificFilters(query))
                     {
-                        var matchingPatients = GetMatchingPatients(database, query);
+                        var matchingPatients = PatientQueries.GetMatchingPatients(database, query);
                         matchingPatients = matchingPatients.Take(500);
 
                         studies = from study in studies
@@ -203,8 +203,8 @@ namespace server
                         }
 
                         response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, currentStudy.Series.Count);
-                        //response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, 1);
-
+                        response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, (from s in currentStudy.Series select s.Images.Count).Sum());
+                        
                         SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
                     }
                 }
@@ -221,168 +221,6 @@ namespace server
         private bool QueryHasPatientSpecificFilters(DcmDataset query)
         {
             return query.Elements.Any(e => e.Tag.Group == 0x0010 && !String.IsNullOrWhiteSpace(query.GetElement(e.Tag).GetValueString()) );
-        }
-
-        private static IQueryable<Study> GetMatchingStudies(MedicalISDataContext database, DcmDataset query)
-        {
-            var studies = from s in database.Studies select s;
-
-            studies = studies.Where(FilterByStudyDate(query));
-            studies = studies.Where(FilterByAccessionNumber(query) );
-            
-            studies.OrderByDescending(s => s.PerformedDateTime);
-
-            return studies;
-        }
-
-
-        private static Expression<Func<Study, bool>> FilterByStudyDate(DcmDataset query)
-        {
-            Expression<Func<Study, bool>> allMatch = p => true;
-
-            var studyQuery = query.GetElement(DicomTags.StudyDate);
-
-            if (studyQuery == null)
-                return allMatch;
-
-            var valueString = studyQuery.GetValueString();
-
-            if (String.IsNullOrWhiteSpace(valueString))
-                return allMatch;
-
-            var dateTimeRange = DateTimeRangeQuery.Parse(valueString);
-
-            return s => s.PerformedDateTime >= dateTimeRange.From && s.PerformedDateTime <= dateTimeRange.To;
-        }
-
-
-        private static Expression<Func<Study, bool>> FilterByAccessionNumber(DcmDataset query)
-        {
-            Expression<Func<Study, bool>> allMatch = p => true;
-
-            var studyQuery = query.GetElement(DicomTags.AccessionNumber);
-
-            if (studyQuery == null)
-                return allMatch;
-
-            var valueString = studyQuery.GetValueString();
-
-            if (String.IsNullOrWhiteSpace(valueString))
-                return allMatch;
-
-            if (valueString.EndsWith("*"))
-                return s => s.AccessionNumber.StartsWith(valueString.Trim('*'));
-            else 
-                return s => s.AccessionNumber == valueString;
-        }
-
-
-        private static IQueryable<Patient> GetMatchingPatients(MedicalISDataContext database, DcmDataset query)
-        {
-            var patients = from p in database.Patients select p;
-
-            patients = patients.Where( FilterByPatientsName(query) );
-            patients = patients.Where(FilterByPatientsId(query));
-            patients = patients.Where(FilterByPatientsBirthDate(query));
-
-            patients = patients.OrderByDescending(p => p.Studies.Max(s => s.PerformedDateTime));
-
-            return patients;
-        }
-
-        private static Expression<Func<Patient, bool>> FilterByPatientsName(DcmDataset query)
-        {
-            Expression<Func<Patient, bool>> allMatch = p => true;
-
-            var patientNameQuery = query.GetElement(DicomTags.PatientsName);
-
-            if (patientNameQuery == null)
-                return allMatch;
-
-            var patientNameDicomFormatted = patientNameQuery.GetValueString();
-
-            if (String.IsNullOrWhiteSpace(patientNameDicomFormatted))
-                return allMatch;
-            
-            var lName = patientNameDicomFormatted.Split(new[] {','});
-            var firstName = "";
-            var lastName = "";
-
-            if (lName.Length == 0)
-                return allMatch;
-
-            if (lName.Length >= 2)
-            {
-                firstName = lName[1];
-                firstName = firstName.TrimEnd('*');
-                firstName = firstName.Replace('*', '%');
-            }
-
-            if (lName.Length >= 1)
-            {
-                lastName = lName[0];
-                lastName = lastName.TrimEnd('*');
-                lastName = lastName.Replace('*', '%');
-            }
-
-            return p => p.FirstName.StartsWith(firstName) && p.LastName.StartsWith(lastName);
-        }
-
-        private static Expression<Func<Patient, bool>> FilterByPatientsId(DcmDataset query)
-        {
-            Expression<Func<Patient, bool>> allMatch = p => true;
-
-            var patientQuery = query.GetElement(DicomTags.PatientID);
-
-            if (patientQuery == null)
-                return allMatch;
-
-            var valueString = patientQuery.GetValueString();
-
-            if (String.IsNullOrWhiteSpace(valueString))
-                return allMatch;
-
-            if (valueString.EndsWith("*"))
-                return p => p.ExternalPatientID.StartsWith(valueString.Trim('*'));
-            else
-                return p => p.ExternalPatientID == valueString;
-        }
-
-        private static Expression<Func<Patient, bool>> FilterByPatientsBirthDate(DcmDataset query)
-        {
-            Expression<Func<Patient, bool>> allMatch = p => true;
-
-            var patientQuery = query.GetElement(DicomTags.PatientsBirthDate);
-
-            if (patientQuery == null)
-                return allMatch;
-
-            var valueString = patientQuery.GetValueString();
-
-            if (String.IsNullOrWhiteSpace(valueString))
-                return allMatch;
-
-            var dateTimeRange = DateTimeRangeQuery.Parse(valueString);
-
-            return p => p.BirthDateTime >= dateTimeRange.From && p.BirthDateTime <= dateTimeRange.To;
-        }
-
-
-        private string Get(string valueToParse, string defaultValue)
-        {
-            if (String.IsNullOrWhiteSpace(valueToParse))
-                return defaultValue;
-
-            return valueToParse;
-        }
-        
-        private static string PrepareDicomName(string lPatientName)
-        {
-            lPatientName = lPatientName.Replace("[", "");
-            lPatientName = lPatientName.Replace("]", "");
-            lPatientName = lPatientName.Replace("*", "");
-        
-            return lPatientName;
         }
 
         protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset query)
