@@ -181,6 +181,7 @@ namespace server
                         // Map saved study tags to output
 
                         response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
+                        response.AddElementWithValue(DicomTags.QueryRetrieveLevel, "STUDY");
 
                         response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
                         response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);
@@ -250,7 +251,7 @@ namespace server
 
                         // Map saved study tags to output
 
-                        response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
+                        //response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
 
                         //response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
                         //response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);
@@ -273,7 +274,9 @@ namespace server
                             response.AddElementWithValue(DicomTags.SeriesDate, currentSeries.PerformedDateTime.Value);
                             response.AddElementWithValue(DicomTags.SeriesTime, currentSeries.PerformedDateTime.Value);
                         }
-                        
+
+                        response.AddElementWithValue(DicomTags.QueryRetrieveLevel, "SERIES");
+
                         response.AddElementWithValue(DicomTags.StudyInstanceUID, currentSeries.StudyInstanceUid);
                         response.AddElementWithValue(DicomTags.SeriesInstanceUID, currentSeries.SeriesInstanceUid);
                         response.AddElementWithValue(DicomTags.SeriesNumber, currentSeries.SeriesNumber);
@@ -286,6 +289,8 @@ namespace server
 
                         //if (_flagAnonymousAccess)
                         //    AnonymizeDatasetBasedOnStudyInfo(response);
+                        Trace.WriteLine("response > ");
+                        Trace.WriteLine(response.Dump());
 
                         SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
                     }
