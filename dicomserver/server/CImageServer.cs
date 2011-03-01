@@ -382,6 +382,12 @@ namespace server
                                                                   //Console.WriteLine("{0}@{1}", p.BytesTransfered, c.Socket.LocalStats.ToString());
                                                               };
 
+                    storeClient.OnCStoreRequestFailed = (c, i) =>
+                                                            {
+                                                                Console.WriteLine("");
+                                                                Console.WriteLine("Failed. " + i.Error.ToString());
+                                                            };
+
                     storeClient.Connect( recipientInfo.Ip, recipientInfo.Port, DcmSocketType.TCP);
 
                     if (storeClient.Wait())
@@ -503,17 +509,17 @@ namespace server
 
         private static IEnumerable<string> GetFilePaths(MedicalISDataContext database, DcmDataset query)
         {
-            if ( String.IsNullOrWhiteSpace(query.GetString(DicomTags.SeriesInstanceUID, "")) )
+            if ( ! String.IsNullOrWhiteSpace(query.GetString(DicomTags.SeriesInstanceUID, "")) )
             {
-                string seriesInstanceUid = query.GetElement(DicomTags.SeriesInstanceUID).GetValueString();
+                string seriesInstanceUid = query.GetString(DicomTags.SeriesInstanceUID,"");
 
                 var imagePaths = from i in database.Images
-                                 where i.Series.SeriesInstanceUid == seriesInstanceUid
+                                 where i.SeriesInstanceUid == seriesInstanceUid
                                  select Path.Combine(Settings.Default.RootPath, i.ArchivedStorageLocation);
 
                 return imagePaths;
             }
-            else if (String.IsNullOrWhiteSpace(query.GetString(DicomTags.StudyInstanceUID, "")))
+            else if ( !String.IsNullOrWhiteSpace(query.GetString(DicomTags.StudyInstanceUID, "")))
             {
                 string studyInstanceUid = query.GetElement(DicomTags.StudyInstanceUID).GetValueString();
 
