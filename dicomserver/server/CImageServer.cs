@@ -503,7 +503,17 @@ namespace server
 
         private static IEnumerable<string> GetFilePaths(MedicalISDataContext database, DcmDataset query)
         {
-            if (query.Elements.Any(e => e.Tag == DicomTags.StudyInstanceUID))
+            if ( String.IsNullOrWhiteSpace(query.GetString(DicomTags.SeriesInstanceUID, "")) )
+            {
+                string seriesInstanceUid = query.GetElement(DicomTags.SeriesInstanceUID).GetValueString();
+
+                var imagePaths = from i in database.Images
+                                 where i.Series.SeriesInstanceUid == seriesInstanceUid
+                                 select Path.Combine(Settings.Default.RootPath, i.ArchivedStorageLocation);
+
+                return imagePaths;
+            }
+            else if (String.IsNullOrWhiteSpace(query.GetString(DicomTags.StudyInstanceUID, "")))
             {
                 string studyInstanceUid = query.GetElement(DicomTags.StudyInstanceUID).GetValueString();
 
