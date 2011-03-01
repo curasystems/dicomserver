@@ -18,7 +18,6 @@ namespace server
             studies = studies.Where( FilterByStudyDate(query) );
             studies = studies.Where( FilterByAccessionNumber(query) );
             
-            
             studies = studies.Where( FilterByModality(query) );
 
             studies.OrderByDescending(s => s.PerformedDateTime);

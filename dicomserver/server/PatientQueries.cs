@@ -9,11 +9,13 @@ namespace server
 {
     public class PatientQueries
     {
-        public static IQueryable<Patient> GetMatchingPatients(MedicalISDataContext database, DcmDataset query)
+        public static IQueryable<Patient> GetMatchingPatients(MedicalISDataContext database, DcmDataset query, bool anonymousOnly = false)
         {
             var patients = from p in database.Patients select p;
 
-            patients = patients.Where(FilterByPatientsName(query));
+            if( anonymousOnly == false )
+                patients = patients.Where(FilterByPatientsName(query));
+
             patients = patients.Where(FilterByPatientsId(query));
             patients = patients.Where(FilterByPatientsBirthDate(query));
 

@@ -34,7 +34,8 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("test=192.168.2.53:11115;other=123.23.3.2:104;OsiriX-Test=192.168.2.53:11112")]
+        [global::System.Configuration.DefaultSettingValueAttribute("test=192.168.2.53:11115,JPEG2000Lossy;other=123.23.3.2:104;OsiriX-Test=192.168.2." +
+            "53:11112,JPEG2000Lossy")]
         public string KnownAEs {
             get {
                 return ((string)(this["KnownAEs"]));
@@ -58,6 +59,15 @@ namespace server.Properties {
         public int ListenPort {
             get {
                 return ((int)(this["ListenPort"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.53;")]
+        public string AnonymizedIPs {
+            get {
+                return ((string)(this["AnonymizedIPs"]));
             }
         }
     }
