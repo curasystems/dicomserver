@@ -333,12 +333,12 @@ namespace server
                     var storeClient = new CStoreClient();
                     storeClient.CallingAE = "CURAPACS";
                     storeClient.CalledAE = destinationAE;
-
+                    storeClient.PreferredTransferSyntax = recipientInfo.TransferSyntax;
+                
                     if (_flagAnonymousAccess)
                         storeClient.DisableFileStreaming = true;
 
-                    storeClient.PreferredTransferSyntax = DicomTransferSyntax.JPEG2000Lossy;
-                
+                    
                     var files = GetFilePaths(database, query);
 
                     foreach (var f in files)
