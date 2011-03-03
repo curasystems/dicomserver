@@ -64,10 +64,37 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.53;")]
+        [global::System.Configuration.DefaultSettingValueAttribute("FIEBACH_DCM;KERSTEN_VPN")]
+        public string AnonymizedAETs {
+            get {
+                return ((string)(this["AnonymizedAETs"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public int MaxNumberOfStudiesReturned {
+            get {
+                return ((int)(this["MaxNumberOfStudiesReturned"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("x192.168.2.53;")]
         public string AnonymizedIPs {
             get {
                 return ((string)(this["AnonymizedIPs"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("00:00:00.1000000")]
+        public global::System.TimeSpan DnsLookupTimeout {
+            get {
+                return ((global::System.TimeSpan)(this["DnsLookupTimeout"]));
             }
         }
     }

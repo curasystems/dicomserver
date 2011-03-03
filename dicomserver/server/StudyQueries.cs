@@ -11,18 +11,104 @@ namespace server
     public class StudyQueries
     {
 
-        public static IQueryable<Study> GetMatchingStudies(MedicalISDataContext database, DcmDataset query)
+        public static IQueryable<Study> GetMatchingStudies(MedicalISDataContext database, DcmDataset query, bool isAnonymousQuery )
         {
             var studies = from s in database.Studies select s;
 
+            if (!isAnonymousQuery)
+                studies = studies.Where( FilterByPatientsName(query) );
+            
+            studies = studies.Where( FilterByPatientsId(query) );
+            studies = studies.Where( FilterByPatientsBirthDate(query) );
+
+            studies = studies.Where( FilterByStudyUid(query) );
             studies = studies.Where( FilterByStudyDate(query) );
             studies = studies.Where( FilterByAccessionNumber(query) );
             
             studies = studies.Where( FilterByModality(query) );
 
-            studies.OrderByDescending(s => s.PerformedDateTime);
+            studies.OrderBy(s => s.PerformedDateTime);
 
             return studies;
+        }
+
+        private static Expression<Func<Study, bool>> FilterByPatientsName(DcmDataset query)
+        {
+            Expression<Func<Study, bool>> allMatch = p => true;
+
+            var patientNameQuery = query.GetElement(DicomTags.PatientsName);
+
+            if (patientNameQuery == null)
+                return allMatch;
+
+            var patientNameDicomFormatted = patientNameQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(patientNameDicomFormatted))
+                return allMatch;
+
+            var lName = patientNameDicomFormatted.Split(new[] { ',' });
+            var firstName = "";
+            var lastName = "";
+
+            if (lName.Length == 0)
+                return allMatch;
+
+            if (lName.Length >= 2)
+            {
+                firstName = lName[1];
+                firstName = firstName.TrimEnd('*');
+                firstName = firstName.Replace('*', '%');
+            }
+
+            if (lName.Length >= 1)
+            {
+                lastName = lName[0];
+                lastName = lastName.TrimEnd('*');
+                lastName = lastName.Replace('*', '%');
+            }
+
+            return s => s.Patient.FirstName.StartsWith(firstName) && s.Patient.LastName.StartsWith(lastName);
+        }
+
+
+        private static Expression<Func<Study, bool>> FilterByPatientsBirthDate(DcmDataset query)
+        {
+            Expression<Func<Study, bool>> allMatch = p => true;
+
+            var patientQuery = query.GetElement(DicomTags.PatientsBirthDate);
+
+            if (patientQuery == null)
+                return allMatch;
+
+            var valueString = patientQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            var dateTimeRange = DateTimeRangeQuery.Parse(valueString);
+
+            return s => s.Patient.BirthDateTime >= dateTimeRange.From && s.Patient.BirthDateTime <= dateTimeRange.To;
+        }
+
+
+        private static Expression<Func<Study, bool>> FilterByPatientsId(DcmDataset query)
+        {
+            Expression<Func<Study, bool>> allMatch = p => true;
+
+            var studyQuery = query.GetElement(DicomTags.PatientID);
+
+            if (studyQuery == null)
+                return allMatch;
+
+            var valueString = studyQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            if (valueString.EndsWith("*"))
+                return s => s.Patient.ExternalPatientID.StartsWith(valueString.Trim('*'));
+            else
+                return s => s.Patient.ExternalPatientID == valueString;
         }
 
 
@@ -40,7 +126,7 @@ namespace server
             if (String.IsNullOrWhiteSpace(valueString))
                 return allMatch;
 
-            var dateTimeRange = DateTimeRangeQuery.Parse(valueString);
+            var dateTimeRange = DateTimeRangeQuery.Parse(valueString, query.GetString(DicomTags.StudyTime, null));
 
             return s => s.PerformedDateTime >= dateTimeRange.From && s.PerformedDateTime <= dateTimeRange.To;
         }
@@ -90,6 +176,31 @@ namespace server
             else
             {
                 return s => s.Series.Any( series => modalities.Contains(series.PerformedModalityType));
+            }
+        }
+
+
+        private static Expression<Func<Study, bool>> FilterByStudyUid(DcmDataset query)
+        {
+            Expression<Func<Study, bool>> allMatch = p => true;
+
+            var studyQuery = query.GetElement(DicomTags.StudyInstanceUID);
+
+            if (studyQuery == null)
+                return allMatch;
+
+            var valueString = studyQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            if (valueString.EndsWith("*"))
+            {
+                return s => s.StudyInstanceUid.StartsWith(valueString.Trim('*'));
+            }
+            else
+            {
+                return s => s.StudyInstanceUid == valueString;
             }
         }
     }

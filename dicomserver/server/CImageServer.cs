@@ -40,7 +40,78 @@ namespace server
         {
             string[] ips = Settings.Default.AnonymizedIPs.Split(';');
 
+            var hostEntry = LookupHostEntry(ipAddress);
+             
+            if( hostEntry != null )
+            {
+                if (IsAnonymizedHostEntry(ipAddress, hostEntry, ips))
+                    return true;
+            }
+            
             return ips.Contains(ipAddress.ToString());
+        }
+
+        private static bool IsAnonymizedHostEntry(IPAddress ipAddress, IPHostEntry hostEntry, string[] ips)
+        {
+            var hostName = hostEntry.HostName;
+
+            Console.WriteLine("Checking hostname of accessing ip {0} => {1} ({2})", ipAddress, hostName, String.Join(",", hostEntry.Aliases));
+
+            if (ips.Any(h => h.ToLower().Trim() == hostName.ToLower().Trim()))
+            {
+                return true;
+            }
+                
+            if (ips.Any(h =>  hostEntry.Aliases.Any( alias => alias.ToLower().Trim() == h.ToLower().Trim())))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static IPHostEntry LookupHostEntry(IPAddress ipAddress)
+        {
+            return LookupHostEntry(ipAddress, Settings.Default.DnsLookupTimeout);
+        }
+
+        public static IPHostEntry LookupHostEntry(IPAddress ipAddress, TimeSpan timeout)
+        {
+            try
+            {
+
+                IAsyncResult result = Dns.BeginGetHostEntry(ipAddress, null, null);
+
+                if (result.AsyncWaitHandle.WaitOne(timeout, false))
+                {
+                    // Received response within timeout limit
+                    return Dns.EndGetHostEntry(result);
+                }
+                else
+                {
+                    // Error occurred, send back IP Address instead of hostname
+                    Console.WriteLine("Looking up hostname of accessing ip {0} => UNKNOWN HOST (Timeout)", ipAddress);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Error occurred, send back IP Address instead of hostname
+                Console.WriteLine("Looking up hostname of accessing ip {0} => UNKNOWN HOST ({1})", ipAddress, ex.Message);
+            }
+
+            return null;
+        }
+
+        private static bool IsAnonymizedAE(string aeTitle)
+        {
+            string[] aeTs = Settings.Default.AnonymizedAETs.Split(';');
+
+            if (aeTs.Any(aet => aet.ToLower().Trim() == aeTitle.ToLower().Trim()))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         protected override void OnReceiveAssociateRequest(DcmAssociate association)
@@ -48,6 +119,10 @@ namespace server
             association.NegotiateAsyncOps = false;
 
             LogID = association.CallingAE;
+
+            Console.WriteLine("Received Association Request from AE:{0} -> {1}", association.CallingAE, association.CalledAE );
+
+            _flagAnonymousAccess = _flagAnonymousAccess || IsAnonymizedAE(association.CallingAE);
 
             foreach (DcmPresContext pc in association.GetPresentationContexts())
             {
@@ -126,12 +201,16 @@ namespace server
 
         protected override void OnReceiveCEchoRequest(byte presentationID, ushort messageID, Dicom.Network.DcmPriority priority)
         {
+            Trace.WriteLine(String.Format("Receive C-Echo from {0} (marked as anonymous:{1})", this.Associate.CallingAE, _flagAnonymousAccess));
             SendCEchoResponse(presentationID, messageID, DcmStatus.Success);
         }
 
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset query)
         {
+            Trace.WriteLine( String.Format("Receive C-Find from {0} (marked as anonymous:{1})", this.Associate.CallingAE, _flagAnonymousAccess ));
             Trace.WriteLine(query.Dump());
+            
+
 
             using( var database = new MedicalISDataContext() )
             {
@@ -139,35 +218,9 @@ namespace server
 
                 if (queryLevel == "STUDY")
                 {
-                    IQueryable<Study> studies = StudyQueries.GetMatchingStudies(database, query);
+                    IQueryable<Study> studies = StudyQueries.GetMatchingStudies(database, query, _flagAnonymousAccess);
 
-                    if (QueryHasPatientSpecificFilters(query))
-                    {
-                        var matchingPatients = PatientQueries.GetMatchingPatients(database, query, _flagAnonymousAccess);
-                        matchingPatients = matchingPatients.Take(500);
-
-                        studies = from study in studies
-                                  join patient in matchingPatients
-                                      on study.PatientId equals patient.PatientId
-                                  select study;
-                    }
-
-                    studies = studies.Take(100);
-
-                    //string lStudyDate = query.GetElement(DicomTags.StudyDate).GetValueString();
-                    //var lStudyDateRange = lStudyDate.Split(new [] {'-'},2);
-
-                    //string lStudyStartAsString = "18000101";
-                    //string lStudyEndAsString = "29990101";
-
-                    //if (lStudyDateRange.Length > 0 )
-                    //    lStudyStartAsString = GetDateString(lStudyDateRange[0], lStudyStartAsString);
-
-                    //if( lStudyDateRange.Length > 1 )
-                    //    lStudyEndAsString = GetDateString(lStudyDateRange[1], lStudyEndAsString);
-
-                    //var studyFrom = DateTime.ParseExact(lStudyStartAsString, "yyyyMMdd", CultureInfo.InvariantCulture);
-                    //var studyTo = DateTime.ParseExact(lStudyEndAsString, "yyyyMMdd", CultureInfo.InvariantCulture);)
+                    studies = studies.Take(Settings.Default.MaxNumberOfStudiesReturned);
 
                     foreach (var currentStudy in studies)
                     {
@@ -211,63 +264,12 @@ namespace server
                 {
                     IQueryable<Series> series = SeriesQueries.GetMatchingSeries(database, query);
 
-                    /*if (QueryHasPatientSpecificFilters(query))
-                    {
-                        var matchingPatients = PatientQueries.GetMatchingPatients(database, query, _flagAnonymousAccess);
-                        matchingPatients = matchingPatients.Take(500);
-
-                        studies = from study in studies
-                                  join patient in matchingPatients
-                                      on study.PatientId equals patient.PatientId
-                                  select study;
-                    }*/
-
-                    //studies = studies.Take(100);
-
-                    //string lStudyDate = query.GetElement(DicomTags.StudyDate).GetValueString();
-                    //var lStudyDateRange = lStudyDate.Split(new [] {'-'},2);
-
-                    //string lStudyStartAsString = "18000101";
-                    //string lStudyEndAsString = "29990101";
-
-                    //if (lStudyDateRange.Length > 0 )
-                    //    lStudyStartAsString = GetDateString(lStudyDateRange[0], lStudyStartAsString);
-
-                    //if( lStudyDateRange.Length > 1 )
-                    //    lStudyEndAsString = GetDateString(lStudyDateRange[1], lStudyEndAsString);
-
-                    //var studyFrom = DateTime.ParseExact(lStudyStartAsString, "yyyyMMdd", CultureInfo.InvariantCulture);
-                    //var studyTo = DateTime.ParseExact(lStudyEndAsString, "yyyyMMdd", CultureInfo.InvariantCulture);)
-
                     foreach (var currentSeries in series)
                     {
-                        //var currentStudy = currentSeries.Study;
-                        //var p = currentSeries.Study.Patient;
-
                         var response = new DcmDataset
                         {
                             SpecificCharacterSetEncoding = query.SpecificCharacterSetEncoding
                         };
-
-                        // Map saved study tags to output
-
-                        //response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
-
-                        //response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
-                        //response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);
-                        //response.AddElementWithValue(DicomTags.PatientsBirthDate, p.BirthDateTime.Value);
-
-
-                        //response.AddElementWithValue(DicomTags.StudyInstanceUID, currentStudy.StudyInstanceUid);
-                        //response.AddElementWithValue(DicomTags.AccessionNumber, currentStudy.AccessionNumber);
-                        //response.AddElementWithValue(DicomTags.StudyDescription, currentStudy.Description);
-                        //response.AddElementWithValue(DicomTags.ModalitiesInStudy, currentStudy.ModalityAggregation);
-
-                        //if (currentStudy.PerformedDateTime.HasValue)
-                        //{
-                        //    response.AddElementWithValue(DicomTags.StudyDate, currentStudy.PerformedDateTime.Value);
-                        //    response.AddElementWithValue(DicomTags.StudyTime, currentStudy.PerformedDateTime.Value);
-                        //}
                         
                         if (currentSeries.PerformedDateTime.HasValue)
                         {
@@ -287,8 +289,6 @@ namespace server
                         response.AddElementWithValue(DicomTags.ReferringPhysiciansName, "");
                         response.AddElementWithValue(DicomTags.StudyCommentsRETIRED, "");
 
-                        //if (_flagAnonymousAccess)
-                        //    AnonymizeDatasetBasedOnStudyInfo(response);
                         Trace.WriteLine("response > ");
                         Trace.WriteLine(response.Dump());
 
@@ -309,7 +309,8 @@ namespace server
 
         protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset query)
         {
-            query.Dump();
+            Trace.WriteLine(String.Format("Receive C-Move from {0} (marked as anonymous:{1})", this.Associate.CallingAE, _flagAnonymousAccess));
+            Trace.WriteLine(query.Dump());
 
             AEInfo recipientInfo = FindAE(destinationAE);
 

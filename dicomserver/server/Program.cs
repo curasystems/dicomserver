@@ -35,7 +35,7 @@ namespace server
             server.AddPort(Settings.Default.ListenPort,DcmSocketType.TCP);
             server.Start();
 
-            Console.WriteLine("Listening on 104");
+            Console.WriteLine("Listening on " + Settings.Default.ListenPort);
             Console.ReadKey();
 
             server.Stop();

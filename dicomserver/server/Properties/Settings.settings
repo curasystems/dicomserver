@@ -19,8 +19,17 @@
     <Setting Name="ListenPort" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">104</Value>
     </Setting>
+    <Setting Name="AnonymizedAETs" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">FIEBACH_DCM;KERSTEN_VPN</Value>
+    </Setting>
+    <Setting Name="MaxNumberOfStudiesReturned" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
     <Setting Name="AnonymizedIPs" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">192.168.2.53;</Value>
+      <Value Profile="(Default)">x192.168.2.53;</Value>
+    </Setting>
+    <Setting Name="DnsLookupTimeout" Type="System.TimeSpan" Scope="Application">
+      <Value Profile="(Default)">00:00:00.1000000</Value>
     </Setting>
   </Settings>
 </SettingsFile>
