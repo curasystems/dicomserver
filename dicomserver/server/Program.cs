@@ -4,7 +4,6 @@ using System.Text;
 
 using Dicom;
 using Dicom.Imaging;
-using Dicom.Imaging.Display;
 using Dicom.Imaging.LUT;
 using Dicom.Imaging.Render;
 using Dicom.Network;

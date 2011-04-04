@@ -18,10 +18,63 @@ namespace server
 
             patients = patients.Where(FilterByPatientsId(query));
             patients = patients.Where(FilterByPatientsBirthDate(query));
+            patients = patients.Where(FilterByStudyPerformedDate(query));
+            patients = patients.Where(FilterByStudyModalityDate(query));
 
             patients = patients.OrderByDescending(p => p.Studies.Max(s => s.PerformedDateTime));
 
             return patients;
+        }
+        private static Expression<Func<Patient, bool>> FilterByStudyPerformedDate(DcmDataset query)
+        {
+            Expression<Func<Patient, bool>> allMatch = p => true;
+
+            var studyQuery = query.GetElement(DicomTags.StudyDate);
+
+            if (studyQuery == null)
+                return allMatch;
+
+            var valueString = studyQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            var dateTimeRange = DateTimeRangeQuery.Parse(valueString, query.GetString(DicomTags.StudyTime, null));
+
+            return
+                p =>
+                p.Studies.Any(s => s.PerformedDateTime >= dateTimeRange.From && s.PerformedDateTime <= dateTimeRange.To);
+        }
+
+
+        private static Expression<Func<Patient, bool>> FilterByStudyModalityDate(DcmDataset query)
+        {
+            Expression<Func<Patient, bool>> allMatch = p => true;
+
+            var studyQuery = query.GetElement(DicomTags.ModalitiesInStudy);
+
+            if (studyQuery == null)
+                return allMatch;
+
+            var valueString = studyQuery.GetValueString();
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            var modalities = valueString.Replace(@"\\", @"\").Split('\\');
+
+            if (String.IsNullOrWhiteSpace(valueString))
+                return allMatch;
+
+            if (modalities.Length == 1)
+            {
+                return p => p.Studies.Any(s => s.ModalityAggregation.Contains(modalities[0]));
+            }
+            else
+            {
+                return p => p.Studies.Any( s => s.Series.Any( series => modalities.Contains(series.PerformedModalityType)));
+                
+            }
         }
 
         private static Expression<Func<Patient, bool>> FilterByPatientsName(DcmDataset query)

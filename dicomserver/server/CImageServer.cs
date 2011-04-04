@@ -120,7 +120,7 @@ namespace server
 
             LogID = association.CallingAE;
 
-            Console.WriteLine("Received Association Request from AE:{0} -> {1}", association.CallingAE, association.CalledAE );
+            Console.WriteLine("{0} Received Association Request from AE:{1} -> {2}", DateTime.Now,association.CallingAE, association.CalledAE );
 
             _flagAnonymousAccess = _flagAnonymousAccess || IsAnonymizedAE(association.CallingAE);
 
@@ -207,7 +207,7 @@ namespace server
 
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset query)
         {
-            Trace.WriteLine( String.Format("Receive C-Find from {0} (marked as anonymous:{1})", this.Associate.CallingAE, _flagAnonymousAccess ));
+            Trace.WriteLine(String.Format("{0} Receive C-Find from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
             Trace.WriteLine(query.Dump());
             
 
@@ -216,7 +216,54 @@ namespace server
             {
                 var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);
 
-                if (queryLevel == "STUDY")
+                if (queryLevel == "PATIENT")
+                {
+                    IQueryable<Patient> patients = PatientQueries.GetMatchingPatients(database, query, _flagAnonymousAccess);
+
+                    patients = patients.Take(Settings.Default.MaxNumberOfStudiesReturned);
+
+                    foreach (var currentPatient in patients)
+                    {
+                        foreach (var currentStudy in currentPatient.Studies)
+                        {
+                            var p = currentPatient;
+
+                            var response = new DcmDataset
+                            {
+                                SpecificCharacterSetEncoding = query.SpecificCharacterSetEncoding
+                            };
+
+                            // Map saved study tags to output
+
+                            response.AddElementWithValue(DicomTags.RetrieveAETitle, "CURAPACS");
+                            response.AddElementWithValue(DicomTags.QueryRetrieveLevel, "PATIENT");
+
+                            response.AddElementWithValue(DicomTags.PatientID, p.ExternalPatientID);
+                            response.AddElementWithValue(DicomTags.PatientsName, p.LastName + "^" + p.FirstName);
+                            response.AddElementWithValue(DicomTags.PatientsBirthDate, p.BirthDateTime.Value);
+
+                            response.AddElementWithValue(DicomTags.StudyInstanceUID, currentStudy.StudyInstanceUid);
+                            response.AddElementWithValue(DicomTags.AccessionNumber, currentStudy.AccessionNumber);
+                            response.AddElementWithValue(DicomTags.StudyDescription, currentStudy.Description);
+                            response.AddElementWithValue(DicomTags.ModalitiesInStudy, currentStudy.ModalityAggregation);
+
+                            if (currentStudy.PerformedDateTime.HasValue)
+                            {
+                                response.AddElementWithValue(DicomTags.StudyDate, currentStudy.PerformedDateTime.Value);
+                                response.AddElementWithValue(DicomTags.StudyTime, currentStudy.PerformedDateTime.Value);
+                            }
+
+                            response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, currentStudy.Series.Count);
+                            response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, (from s in currentStudy.Series select s.Images.Count).Sum());
+
+                            if (_flagAnonymousAccess)
+                                AnonymizeDatasetBasedOnStudyInfo(response);
+
+                            SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
+                        }
+                    }
+                }
+                else if (queryLevel == "STUDY")
                 {
                     IQueryable<Study> studies = StudyQueries.GetMatchingStudies(database, query, _flagAnonymousAccess);
 
@@ -309,14 +356,16 @@ namespace server
 
         protected override void OnReceiveCMoveRequest(byte presentationID, ushort messageID, string destinationAE, DcmPriority priority, DcmDataset query)
         {
-            Trace.WriteLine(String.Format("Receive C-Move from {0} (marked as anonymous:{1})", this.Associate.CallingAE, _flagAnonymousAccess));
-            Trace.WriteLine(query.Dump());
+            Console.WriteLine(String.Format("{0} Receive C-Move from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
+            Debug.WriteLine(query.Dump());
 
             AEInfo recipientInfo = FindAE(destinationAE);
 
             if (recipientInfo == null)
             {
                 SendCMoveResponse(presentationID, messageID, DcmStatus.QueryRetrieveMoveDestinationUnknown, 0, 0, 0, 0);
+                Console.Write("Moving to:" + recipientInfo.Name + "> ");
+
                 return;
             }
 
@@ -335,29 +384,63 @@ namespace server
                     storeClient.CallingAE = "CURAPACS";
                     storeClient.CalledAE = destinationAE;
                     storeClient.PreferredTransferSyntax = recipientInfo.TransferSyntax;
-                
+                    storeClient.PreloadCount = 10;
+                    storeClient.LogID = "store";
+
+                    if (Settings.Default.DebugMove)
+                    Dicom.Debug.InitializeConsoleDebugLogger();
+
                     if (_flagAnonymousAccess)
                         storeClient.DisableFileStreaming = true;
 
-                    
+
                     var files = GetFilePaths(database, query);
+
+                    if (Settings.Default.UseFixedFolder)
+                    {
+                        files = Directory.GetFiles(Settings.Default.FixedFolderPath);
+                    }
+
+                    long totalSize = 0;
 
                     foreach (var f in files)
                     {
+                        totalSize += new FileInfo(f).Length;
                         storeClient.AddFile(f);
                     }
 
-                    ushort totalImageCount = (ushort)files.Count();
+                    var totalImageCount = (ushort) files.Count();
 
+                    Console.Write("#{0} files > ", totalImageCount);
+
+                    Stopwatch timer = Stopwatch.StartNew();
+                    
+                    
                     storeClient.OnCStoreRequestBegin = (c, i) =>
                                                            {
                                                                if (_flagAnonymousAccess)
-                                                               { 
+                                                               {
                                                                    var dataset = i.Dataset;
 
                                                                    AnonymizeDatasetBasedOnStudyInfo(dataset);
                                                                }
                                                            };
+
+                    storeClient.OnCStoreRequestComplete = (c, i) =>
+                                                                {
+                                                                  timer.Stop();
+ 
+                                                                  if (i.HasError)                                                                 
+                                                                  {
+                                                                      Console.WriteLine("Error:{0}", i.Error);
+                                                                  }
+                                                                  else
+                                                                  {
+                                                                  //    Console.WriteLine("Done");
+                                                                  }
+
+                                                                  imagesProcessed++;
+                                                              };
 
                     storeClient.OnCStoreResponseReceived = (c, i) =>
                                                                {
@@ -373,9 +456,6 @@ namespace server
                                                                        Console.Write("x");
                                                                    }
 
-                                                                   imagesProcessed++;
-                                                            
-                                                                   SendCMoveResponse(presentationID, messageID, DcmStatus.Pending, (ushort)(totalImageCount-imagesProcessed), (ushort) successCount, 0, errorCount);
                                                                };
 
                     storeClient.OnCStoreRequestProgress = (c, i, p) =>
@@ -389,19 +469,24 @@ namespace server
                                                                 Console.WriteLine("Failed. " + i.Error.ToString());
                                                             };
 
-                    storeClient.Connect( recipientInfo.Ip, recipientInfo.Port, DcmSocketType.TCP);
+                    storeClient.Connect(recipientInfo.Ip, recipientInfo.Port, DcmSocketType.TCP);
 
                     if (storeClient.Wait())
                     {
-                
+
                     }
+                
+                    timer.Stop();
 
-                    storeClient.Close();
-
-                    SendCMoveResponse(presentationID, messageID, DcmStatus.Success, 0, imagesProcessed, 0, 0);
+                    
+                    double bytesPerSeconds = (double) totalSize/timer.Elapsed.TotalSeconds;
+                    double MiBPerSecond = bytesPerSeconds/(1024.0*1024.0);
 
                     Console.WriteLine("");
-                    Console.WriteLine("Done.");
+                    Console.WriteLine("Done. {0} MiB/s (ImagesProcessed={1})", MiBPerSecond, imagesProcessed);
+
+                    SendCMoveResponse(presentationID, messageID, DcmStatus.Success, 0, imagesProcessed, 0, 0);
+                    storeClient.Close();
                 }
             }
             catch (Exception ex)
