@@ -19,3 +19,5 @@ _ReSharper.*
 *.swp
 *.ilk
 TestResults
+*.psess
+*.vsp
