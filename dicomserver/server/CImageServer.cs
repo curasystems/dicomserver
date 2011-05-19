@@ -164,14 +164,21 @@ namespace server
 
             _flagAnonymousAccess = _flagAnonymousAccess || IsAnonymizedAE(association.CallingAE);
 
+            var handled = false;
+
             foreach (DcmPresContext pc in association.GetPresentationContexts())
             {
-                HandleEchoAssociationRequest(pc);
-                HandleFindAssociationRequest(pc);
-                HandleMoveAssociationRequest(pc);
+                
+                handled |= HandleEchoAssociationRequest(pc);
+                handled |= HandleFindAssociationRequest(pc);
+                handled |= HandleMoveAssociationRequest(pc);
+
+                if (handled)
+                    break;
             }
 
-            HandleStoreAssociationRequest(association);
+            if( !handled )
+                HandleStoreAssociationRequest(association);
 
             SendAssociateAccept(association);
         }
@@ -180,31 +187,50 @@ namespace server
         {
             DcmAssociateProfile profile = DcmAssociateProfile.Find(association, true);
             profile.Apply(association);
+
+            IsReceiveConnection = true;
         }
         
-        private static void HandleMoveAssociationRequest(DcmPresContext pc)
+        private static bool HandleMoveAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.StudyRootQueryRetrieveInformationModelMOVE)
             {
                 AcceptStandardTransferSyntaxes(pc);
+
+                return true;
             }
+
+            return false;
         }
 
 
-        private static void HandleFindAssociationRequest(DcmPresContext pc)
+        private static bool HandleFindAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.StudyRootQueryRetrieveInformationModelFIND)
             {
                 AcceptStandardTransferSyntaxes(pc);
+                return true;
             }
+
+            if (pc.AbstractSyntax == DicomUID.PatientRootQueryRetrieveInformationModelFIND)
+            {
+                AcceptStandardTransferSyntaxes(pc);
+                return true;
+            }
+
+            return false;
         }
 
-        private static void HandleEchoAssociationRequest(DcmPresContext pc)
+        private static bool HandleEchoAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.VerificationSOPClass)
             {
                 AcceptStandardTransferSyntaxes(pc);
+            
+                return true;
             }
+
+            return false;
         }
 
 
@@ -398,11 +424,40 @@ namespace server
                 string fileName = Path.GetFileName(path);
                 string newPath = Path.Combine(storageFolder, fileName);
 
-                File.Move(path, newPath);
+                if (File.Exists(newPath))
+                {
+                    Trace.WriteLine("File already exists:" + newPath );
+                    
+                    try
+                    {
+                        File.Delete(newPath);
+                    }
+                    catch (Exception)
+                    {
+                        Trace.WriteLine("Could not delete file at path:" + newPath);
+                    }
+                }
+
+                try
+                {
+                    File.Move(path, newPath);
+                }
+                catch
+                {
+                    Trace.WriteLine("Could not move file to:" + newPath);
+                }
             } 
         }
 
         protected override void OnReceiveDimse(byte pcid, DcmCommand command, DcmDataset dataset, DcmDimseProgress progress)
+        {
+            if (IsReceiveConnection)
+                SaveDimseToFile(dataset);    
+            else
+                base.OnReceiveDimse(pcid, command, dataset, progress);
+        }
+
+        private void SaveDimseToFile(DcmDataset dataset)
         {
             var now = DateTime.Now;
 
@@ -549,12 +604,11 @@ namespace server
                         storeClient.AddFile(f);
                     }
 
-                    var totalImageCount = (ushort) files.Count();
+                    int totalImageCount = (ushort) files.Count();
 
                     Console.Write("#{0} files > ", totalImageCount);
 
                     Stopwatch timer = Stopwatch.StartNew();
-                    
                     
                     storeClient.OnCStoreRequestBegin = (c, i) =>
                                                            {
@@ -579,7 +633,7 @@ namespace server
                                                                   //    Console.WriteLine("Done");
                                                                   }
 
-                                                                  imagesProcessed++;
+                                                                  totalImageCount -= storeClient.PendingCount;
                                                               };
 
                     storeClient.OnCStoreResponseReceived = (c, i) =>
