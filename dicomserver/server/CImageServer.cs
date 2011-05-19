@@ -180,8 +180,6 @@ namespace server
         {
             DcmAssociateProfile profile = DcmAssociateProfile.Find(association, true);
             profile.Apply(association);
-
-            IsReceiveConnection = true;
         }
         
         private static void HandleMoveAssociationRequest(DcmPresContext pc)
@@ -767,7 +765,7 @@ namespace server
         private int ImageCountOnConnection;
         private Stopwatch Timer;
         private Queue<string> MoveQueue = new Queue<string>();
-        private static bool IsReceiveConnection;
+        private static bool IsReceiveConnection = false;
 
         public bool HasReceiveFilters
         {

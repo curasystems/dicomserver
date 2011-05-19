@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Linq.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -112,7 +113,12 @@ namespace server
                 lastName = lastName.Replace('*', '%');
             }
 
-            return p => p.FirstName.StartsWith(firstName) && p.LastName.StartsWith(lastName);
+            if (!firstName.StartsWith("\""))
+                firstName += "%";
+            if (!lastName.StartsWith("\""))
+                lastName += "%";
+
+            return p => SqlMethods.Like(p.FirstName, firstName) && SqlMethods.Like(p.LastName, lastName);
         }
 
         private static Expression<Func<Patient, bool>> FilterByPatientsId(DcmDataset query)

@@ -67,7 +67,12 @@ namespace server
                 lastName = lastName.Replace('*', '%');
             }
 
-            return s => s.Patient.FirstName.StartsWith(firstName) && s.Patient.LastName.StartsWith(lastName);
+            if( !firstName.StartsWith("\""))
+                firstName += "%";
+            if (!lastName.StartsWith("\""))
+                lastName += "%";
+
+            return s => SqlMethods.Like(s.Patient.FirstName, firstName) && SqlMethods.Like(s.Patient.LastName, lastName);
         }
 
 
