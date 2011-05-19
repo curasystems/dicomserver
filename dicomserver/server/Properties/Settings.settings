@@ -16,14 +16,8 @@
     <Setting Name="MaxNumberOfStudiesReturned" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">100</Value>
     </Setting>
-    <Setting Name="AnonymizedIPs" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">x192.168.2.53;</Value>
-    </Setting>
     <Setting Name="DnsLookupTimeout" Type="System.TimeSpan" Scope="Application">
       <Value Profile="(Default)">00:00:00.1000000</Value>
-    </Setting>
-    <Setting Name="AnonymizedAETs" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">FIEBACH_DCM;KERSTEN_VPN;OsiriX-Test</Value>
     </Setting>
     <Setting Name="UseFixedFolder" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
@@ -34,11 +28,41 @@
     <Setting Name="KnownAEs" Type="System.String" Scope="Application">
       <Value Profile="(Default)">test=192.168.2.53:11115,JPEG2000Lossy;other=123.23.3.2:104;OsiriX-Test=192.168.2.53:11112,JPEG2000Lossy;CURATEST=127.0.0.1:10108</Value>
     </Setting>
-    <Setting Name="ListenPort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">10105</Value>
-    </Setting>
     <Setting Name="DebugMove" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AnonymizedIPs" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">192.168.2.53;</Value>
+    </Setting>
+    <Setting Name="AnonymizedAETs" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">OsiriX-Test</Value>
+    </Setting>
+    <Setting Name="ListenPort" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">10005</Value>
+    </Setting>
+    <Setting Name="StandardReceiveFolder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Receive</Value>
+    </Setting>
+    <Setting Name="BatchImportSizeLimitForSecondaryPriority" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="SecondaryPriorityStorageFolder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Receive.Prio2</Value>
+    </Setting>
+    <Setting Name="TemporaryReceiveFolder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Receive.Temp</Value>
+    </Setting>
+    <Setting Name="ReceiveFilter_ImageType" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">^.*MOSAIC$</Value>
+    </Setting>
+    <Setting Name="ReceiveFilter_SeriesDescription" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">^.*TENSOR$;^PhoenixZIPReport$;^3D_Application_Data$</Value>
+    </Setting>
+    <Setting Name="ReceiveFilter_Folder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Receive.Filtered</Value>
+    </Setting>
+    <Setting Name="ReceiveFilter_Keep" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

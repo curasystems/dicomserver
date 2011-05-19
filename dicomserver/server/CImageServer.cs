@@ -4,21 +4,28 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
+using Dicom;
 using Dicom.Data;
 using Dicom.Network;
 using Dicom.Network.Client;
 using Dicom.Network.Server;
 using server.Properties;
+using Debug = System.Diagnostics.Debug;
 
 namespace server
 {
     public class CImageServer : DcmServiceBase
     {
-        
-
         public CImageServer()
         {
-            LogID = "C-Find/Move SCP";
+            LogID = "CuraSystems DICOM SCP";
+            
+            ImageCountOnConnection = 0;
+
+            UseFileBuffer = false;
+
+
         }
 
         protected override void OnInitializeNetwork()
@@ -29,8 +36,8 @@ namespace server
             {
                 _flagAnonymousAccess = IsAnonymizedIp(ipEndpoint.Address);
 
-                if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.1.155")))
-                    this.ThrottleSpeed = 10;
+                //if (ipEndpoint.Address.Equals(IPAddress.Parse("192.168.1.155")))
+                //    this.ThrottleSpeed = 10;
             }
 
             base.OnInitializeNetwork();
@@ -79,7 +86,6 @@ namespace server
         {
             try
             {
-
                 IAsyncResult result = Dns.BeginGetHostEntry(ipAddress, null, null);
 
                 if (result.AsyncWaitHandle.WaitOne(timeout, false))
@@ -114,88 +120,109 @@ namespace server
             return false;
         }
 
+        protected override void OnReceiveReleaseRequest()
+        {
+            base.OnReceiveReleaseRequest();
+        }
+
+        protected override void OnConnectionClosed()
+        {
+            Timer.Stop();
+
+            var now = DateTime.Now;
+
+            if (ImageCountOnConnection > 0)
+            {
+                Console.WriteLine("{0}:Received {1} files in {2}", now, ImageCountOnConnection, Timer.Elapsed);
+            }
+
+            if (IsReceiveConnection && ImageCountOnConnection == 0)
+            {
+                Console.WriteLine("{0}:ERROR Received no files on storage request association...", now);
+                Console.WriteLine(Associate.ToString());
+                Console.WriteLine();
+            }   
+
+            if (MoveQueue.Count > 0)
+            {
+                MoveReceivedFilesIntoCorrectFolder();
+            }
+
+            base.OnConnectionClosed();
+        }
+
+
         protected override void OnReceiveAssociateRequest(DcmAssociate association)
         {
+            Timer = Stopwatch.StartNew();
+
             association.NegotiateAsyncOps = false;
 
             LogID = association.CallingAE;
 
-            Console.WriteLine("{0} Received Association Request from AE:{1} -> {2}", DateTime.Now,association.CallingAE, association.CalledAE );
+            Console.WriteLine("{0} Received Association Request from AE:{1} -> {2}", DateTime.Now, association.CallingAE, association.CalledAE );
 
             _flagAnonymousAccess = _flagAnonymousAccess || IsAnonymizedAE(association.CallingAE);
 
             foreach (DcmPresContext pc in association.GetPresentationContexts())
             {
-                pc.SetResult(DcmPresContextResult.RejectTransferSyntaxesNotSupported);
-
-                HandleEchoRequests(pc);
-                HandleFindRequests(pc);
-                HandleMoveRequests(pc);
+                HandleEchoAssociationRequest(pc);
+                HandleFindAssociationRequest(pc);
+                HandleMoveAssociationRequest(pc);
             }
+
+            HandleStoreAssociationRequest(association);
 
             SendAssociateAccept(association);
         }
 
-        private static void HandleMoveRequests(DcmPresContext pc)
+        private static void HandleStoreAssociationRequest(DcmAssociate association)
+        {
+            DcmAssociateProfile profile = DcmAssociateProfile.Find(association, true);
+            profile.Apply(association);
+
+            IsReceiveConnection = true;
+        }
+        
+        private static void HandleMoveAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.StudyRootQueryRetrieveInformationModelMOVE)
             {
-                if (pc.HasTransfer(DicomTransferSyntax.ImplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ImplicitVRLittleEndian);
-                }
-                else if (pc.HasTransfer(DicomTransferSyntax.ExplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ExplicitVRLittleEndian);
-                }
-
-                if (pc.HasTransfer(DicomTransferSyntax.JPEG2000Lossless))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.JPEG2000Lossless);
-                }
-                else if (pc.HasTransfer(DicomTransferSyntax.JPEG2000Lossy))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.JPEG2000Lossy);
-                }
+                AcceptStandardTransferSyntaxes(pc);
             }
         }
 
-        private static void HandleFindRequests(DcmPresContext pc)
+
+        private static void HandleFindAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.StudyRootQueryRetrieveInformationModelFIND)
             {
-                if (pc.HasTransfer(DicomTransferSyntax.ImplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ImplicitVRLittleEndian);
-                }
-                else if (pc.HasTransfer(DicomTransferSyntax.ExplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ExplicitVRLittleEndian);
-                }
-
-                if (pc.HasTransfer(DicomTransferSyntax.JPEG2000Lossless))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.JPEG2000Lossless);
-                }
-                else if (pc.HasTransfer(DicomTransferSyntax.JPEG2000Lossy))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.JPEG2000Lossy);
-                }
+                AcceptStandardTransferSyntaxes(pc);
             }
         }
 
-        private void HandleEchoRequests(DcmPresContext pc)
+        private static void HandleEchoAssociationRequest(DcmPresContext pc)
         {
             if (pc.AbstractSyntax == DicomUID.VerificationSOPClass)
             {
-                if (pc.HasTransfer(DicomTransferSyntax.ImplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ImplicitVRLittleEndian);
-                }
-                else if (pc.HasTransfer(DicomTransferSyntax.ExplicitVRLittleEndian))
-                {
-                    pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ExplicitVRLittleEndian);
-                }
+                AcceptStandardTransferSyntaxes(pc);
+            }
+        }
+
+
+        private static void AcceptStandardTransferSyntaxes(DcmPresContext pc)
+        {
+            if (pc.HasTransfer(DicomTransferSyntax.ImplicitVRLittleEndian))
+            {
+                pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ImplicitVRLittleEndian);
+            }
+            else if (pc.HasTransfer(DicomTransferSyntax.ExplicitVRLittleEndian))
+            {
+                pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ExplicitVRLittleEndian);
+            }
+            else if (pc.HasTransfer(DicomTransferSyntax.ExplicitVRBigEndian))
+            {
+                pc.SetResult(DcmPresContextResult.Accept, DicomTransferSyntax.ExplicitVRBigEndian);
             }
         }
 
@@ -210,8 +237,6 @@ namespace server
             Trace.WriteLine(String.Format("{0} Receive C-Find from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
             Trace.WriteLine(query.Dump());
             
-
-
             using( var database = new MedicalISDataContext() )
             {
                 var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);
@@ -345,8 +370,125 @@ namespace server
                 }
 
                 SendCFindResponse(presentationID, messageID, DcmStatus.Success);
-
             }
+        }
+
+        protected override void OnReceiveCStoreRequest(byte presentationID, ushort messageID, DicomUID affectedInstance,
+            DcmPriority priority, string moveAE, ushort moveMessageID, DcmDataset dataset, string fileName)
+        {
+            Trace.WriteLine(String.Format("{0} Receive C-Store from {1} ", DateTime.Now, this.Associate.CallingAE));
+           
+            DcmStatus status = DcmStatus.Success;
+
+            SendCStoreResponse(presentationID, messageID, affectedInstance, status);
+        }
+
+
+        private void MoveReceivedFilesIntoCorrectFolder()
+        {
+            string storageFolder = Settings.Default.StandardReceiveFolder;
+            
+            if (ImageCountOnConnection >= Settings.Default.BatchImportSizeLimitForSecondaryPriority)
+            {
+                storageFolder = Settings.Default.SecondaryPriorityStorageFolder;
+            }
+
+            while( MoveQueue.Count > 0)
+            {
+                string path = MoveQueue.Dequeue();
+
+                string fileName = Path.GetFileName(path);
+                string newPath = Path.Combine(storageFolder, fileName);
+
+                File.Move(path, newPath);
+            } 
+        }
+
+        protected override void OnReceiveDimse(byte pcid, DcmCommand command, DcmDataset dataset, DcmDimseProgress progress)
+        {
+            var now = DateTime.Now;
+
+            Trace.WriteLine(String.Format("{0} Receive DIMSE {1} from {2} ", now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE));
+            ImageCountOnConnection++;
+
+            bool isFiltered = IsFilteredOutData(dataset);
+
+            if (isFiltered && !Settings.Default.ReceiveFilter_Keep)
+                return;
+
+            var fileName = GetFileNameForDicomDataset(dataset);
+            string filePath;
+
+            if (!isFiltered)
+            {
+                filePath = DefineStorageLocationOfFile(fileName);
+            }
+            else
+            {
+                filePath = Path.Combine(Settings.Default.ReceiveFilter_Folder, fileName);
+            }
+
+            Trace.WriteLine(String.Format("{0} Saving DIMSE {1} from {2} to {3} ", now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE, filePath));
+          
+            var ff = new DicomFileFormat(dataset);
+            ff.Save( filePath, DicomWriteOptions.Default);
+        }
+
+        private bool IsFilteredOutData(DcmDataset dataset)
+        {
+            if (!HasReceiveFilters)
+            {
+                return false;
+            }
+
+            var imageType = dataset.GetString(DicomTags.ImageType, "");
+
+            if (IsFilteredOut(imageType, ReceiveFilter_ImageTypes))
+            { 
+                Trace.WriteLine(String.Format("{0} Filtered DIMSE {1} from {2} because of imageType:{3}", DateTime.Now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE, imageType));
+                return true;
+            }
+
+            var seriesDescription = dataset.GetString(DicomTags.SeriesDescription, "");
+
+            if (IsFilteredOut(seriesDescription, ReceiveFilter_SeriesDescription))
+            {
+                Trace.WriteLine(String.Format("{0} Filtered DIMSE {1} from {2} because of seriesDescription:{3}", DateTime.Now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE, seriesDescription));
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsFilteredOut(string text, IEnumerable<Regex> ReceiveFilter_ImageTypes)
+        {
+            return ReceiveFilter_ImageTypes.Any(filter => filter.Match(text).Success);
+        }
+
+        private static string GetFileNameForDicomDataset(DcmDataset dataset)
+        {
+            return dataset.GetString(DicomTags.Modality, "UN") + "." + dataset.GetString(DicomTags.SOPInstanceUID, "UnknownSOPInstanceUID") + ".dcm";
+        }
+
+        private string DefineStorageLocationOfFile(string fileName)
+        {
+            bool fileMovePending = true;
+            string storageFolder = Settings.Default.TemporaryReceiveFolder;
+            
+            if (ImageCountOnConnection >= Settings.Default.BatchImportSizeLimitForSecondaryPriority)
+            {
+                storageFolder = Settings.Default.SecondaryPriorityStorageFolder;
+                fileMovePending = false;
+            }
+            
+            string filePath = Path.Combine(storageFolder, fileName);
+
+            if (fileMovePending)
+            {
+                MoveQueue.Enqueue(filePath);
+            }
+
+            return filePath;
         }
 
         private static bool QueryHasPatientSpecificFilters(DcmDataset query)
@@ -622,5 +764,47 @@ namespace server
         }
     
         private bool _flagAnonymousAccess = false;
+        private int ImageCountOnConnection;
+        private Stopwatch Timer;
+        private Queue<string> MoveQueue = new Queue<string>();
+        private static bool IsReceiveConnection;
+
+        public bool HasReceiveFilters
+        {
+            get
+            {
+                return
+                    ReceiveFilter_ImageTypes != null && ReceiveFilter_SeriesDescription != null;
+            }
+        }
+
+        public void BuildReceiveFilters()
+        {
+            ReceiveFilter_ImageTypes = BuildFilters(Settings.Default.ReceiveFilter_ImageType);
+            ReceiveFilter_SeriesDescription = BuildFilters(Settings.Default.ReceiveFilter_SeriesDescription);
+        }
+
+        private List<Regex>  BuildFilters(string concatenatedFilterString)
+        {
+            var filterExpressions = new List<Regex>();
+
+            if (!String.IsNullOrWhiteSpace(concatenatedFilterString))
+            {
+                var filters = concatenatedFilterString.Split(';');
+
+                foreach (var filter in filters)
+                {
+                    var expression = new Regex(Settings.Default.ReceiveFilter_ImageType,
+                                               RegexOptions.Compiled | RegexOptions.Singleline);
+
+                    filterExpressions.Add(expression);
+                }
+            }
+
+            return filterExpressions;
+        }
+
+        private List<Regex> ReceiveFilter_ImageTypes;
+        private List<Regex> ReceiveFilter_SeriesDescription;
     }
 }

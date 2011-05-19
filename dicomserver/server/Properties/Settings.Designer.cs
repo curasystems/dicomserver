@@ -54,28 +54,10 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("x192.168.2.53;")]
-        public string AnonymizedIPs {
-            get {
-                return ((string)(this["AnonymizedIPs"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("00:00:00.1000000")]
         public global::System.TimeSpan DnsLookupTimeout {
             get {
                 return ((global::System.TimeSpan)(this["DnsLookupTimeout"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("FIEBACH_DCM;KERSTEN_VPN;OsiriX-Test")]
-        public string AnonymizedAETs {
-            get {
-                return ((string)(this["AnonymizedAETs"]));
             }
         }
         
@@ -109,7 +91,34 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10105")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DebugMove {
+            get {
+                return ((bool)(this["DebugMove"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.2.53;")]
+        public string AnonymizedIPs {
+            get {
+                return ((string)(this["AnonymizedIPs"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("OsiriX-Test")]
+        public string AnonymizedAETs {
+            get {
+                return ((string)(this["AnonymizedAETs"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10005")]
         public int ListenPort {
             get {
                 return ((int)(this["ListenPort"]));
@@ -118,10 +127,73 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool DebugMove {
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Receive")]
+        public string StandardReceiveFolder {
             get {
-                return ((bool)(this["DebugMove"]));
+                return ((string)(this["StandardReceiveFolder"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public int BatchImportSizeLimitForSecondaryPriority {
+            get {
+                return ((int)(this["BatchImportSizeLimitForSecondaryPriority"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Receive.Prio2")]
+        public string SecondaryPriorityStorageFolder {
+            get {
+                return ((string)(this["SecondaryPriorityStorageFolder"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Receive.Temp")]
+        public string TemporaryReceiveFolder {
+            get {
+                return ((string)(this["TemporaryReceiveFolder"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("^.*MOSAIC$")]
+        public string ReceiveFilter_ImageType {
+            get {
+                return ((string)(this["ReceiveFilter_ImageType"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("^.*TENSOR$;^PhoenixZIPReport$;^3D_Application_Data$")]
+        public string ReceiveFilter_SeriesDescription {
+            get {
+                return ((string)(this["ReceiveFilter_SeriesDescription"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Receive.Filtered")]
+        public string ReceiveFilter_Folder {
+            get {
+                return ((string)(this["ReceiveFilter_Folder"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ReceiveFilter_Keep {
+            get {
+                return ((bool)(this["ReceiveFilter_Keep"]));
             }
         }
     }
