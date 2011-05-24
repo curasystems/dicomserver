@@ -178,8 +178,6 @@ namespace server
         {
             DcmAssociateProfile profile = DcmAssociateProfile.Find(association, true);
             profile.Apply(association);
-
-            IsReceiveConnection = true;
         }
         
         private static bool HandleMoveAssociationRequest(DcmPresContext pc)
