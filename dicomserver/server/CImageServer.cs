@@ -136,7 +136,7 @@ namespace server
 
             if (IsReceiveConnection && ImageCountOnConnection == 0)
             {
-                Console.WriteLine("{0}:INFO Received no files in association.", now);
+                Console.WriteLine("{0}:INFO Received no files in association with storage request.", now);
                 Console.WriteLine(Associate.ToString());
                 Console.WriteLine();
             }   
@@ -379,7 +379,6 @@ namespace server
 
                         SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
                     }
-
                 }
 
                 SendCFindResponse(presentationID, messageID, DcmStatus.Success);
@@ -392,6 +391,8 @@ namespace server
             Trace.WriteLine(String.Format("{0} Receive C-Store from {1} ", DateTime.Now, this.Associate.CallingAE));
            
             DcmStatus status = DcmStatus.Success;
+
+            IsReceiveConnection = true;
 
             SendCStoreResponse(presentationID, messageID, affectedInstance, status);
         }
@@ -445,7 +446,7 @@ namespace server
                 IsReceiveConnection = true;
                 SaveDimseToFile(dataset);
             }
-
+            
             base.OnReceiveDimse(pcid, command, dataset, progress);
         }
 
@@ -457,7 +458,6 @@ namespace server
             ImageCountOnConnection++;
 
             bool isFiltered = IsFilteredOutData(dataset);
-
             
             if (isFiltered && !Settings.Default.ReceiveFilter_Keep)
                 return;
@@ -506,9 +506,12 @@ namespace server
             return false;
         }
 
-        private static bool IsFilteredOut(string text, IEnumerable<Regex> ReceiveFilter_ImageTypes)
+        private static bool IsFilteredOut(string text, IEnumerable<Regex> filters)
         {
-            return ReceiveFilter_ImageTypes.Any(filter => filter.Match(text).Success);
+            if (filters == null)
+                return false;
+
+            return filters.Any(filter => filter.Match(text).Success);
         }
 
         private static string GetFileNameForDicomDataset(DcmDataset dataset)
