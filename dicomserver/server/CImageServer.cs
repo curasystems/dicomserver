@@ -849,7 +849,7 @@ namespace server
                 {
                     Trace.WriteLine("Building filter based on :" + filter);
 
-                    var expression = new Regex(Settings.Default.ReceiveFilter_ImageType,
+                    var expression = new Regex(filter,
                                                RegexOptions.Compiled | RegexOptions.Singleline);
 
                     filterExpressions.Add(expression);
