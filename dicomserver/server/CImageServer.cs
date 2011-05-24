@@ -23,6 +23,8 @@ namespace server
             
             ImageCountOnConnection = 0;
 
+            BuildReceiveFilters();
+
             UseFileBuffer = false;
         }
 
@@ -510,7 +512,7 @@ namespace server
         {
             if (filters == null)
                 return false;
-
+    
             return filters.Any(filter => filter.Match(text).Success);
         }
 
