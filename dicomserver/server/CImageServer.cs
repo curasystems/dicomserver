@@ -442,10 +442,13 @@ namespace server
 
         protected override void OnReceiveDimse(byte pcid, DcmCommand command, DcmDataset dataset, DcmDimseProgress progress)
         {
-            if (IsReceiveConnection)
-                SaveDimseToFile(dataset);    
-            else
-                base.OnReceiveDimse(pcid, command, dataset, progress);
+            if (command.CommandField == DcmCommandField.CStoreRequest)
+            {
+                IsReceiveConnection = true;
+                SaveDimseToFile(dataset);
+            }
+
+            base.OnReceiveDimse(pcid, command, dataset, progress);
         }
 
         private void SaveDimseToFile(DcmDataset dataset)
