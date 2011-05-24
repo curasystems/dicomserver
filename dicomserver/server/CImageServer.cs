@@ -24,8 +24,6 @@ namespace server
             ImageCountOnConnection = 0;
 
             UseFileBuffer = false;
-
-
         }
 
         protected override void OnInitializeNetwork()
@@ -138,7 +136,7 @@ namespace server
 
             if (IsReceiveConnection && ImageCountOnConnection == 0)
             {
-                Console.WriteLine("{0}:ERROR Received no files on storage request association...", now);
+                Console.WriteLine("{0}:INFO Received no files in association.", now);
                 Console.WriteLine(Associate.ToString());
                 Console.WriteLine();
             }   
@@ -164,21 +162,14 @@ namespace server
 
             _flagAnonymousAccess = _flagAnonymousAccess || IsAnonymizedAE(association.CallingAE);
 
-            var handled = false;
-
             foreach (DcmPresContext pc in association.GetPresentationContexts())
             {
-                
-                handled |= HandleEchoAssociationRequest(pc);
-                handled |= HandleFindAssociationRequest(pc);
-                handled |= HandleMoveAssociationRequest(pc);
-
-                if (handled)
-                    break;
+                HandleEchoAssociationRequest(pc);
+                HandleFindAssociationRequest(pc);
+                HandleMoveAssociationRequest(pc);
             }
 
-            if( !handled )
-                HandleStoreAssociationRequest(association);
+            HandleStoreAssociationRequest(association);
 
             SendAssociateAccept(association);
         }
@@ -466,6 +457,7 @@ namespace server
 
             bool isFiltered = IsFilteredOutData(dataset);
 
+            
             if (isFiltered && !Settings.Default.ReceiveFilter_Keep)
                 return;
 
@@ -826,7 +818,8 @@ namespace server
             get
             {
                 return
-                    ReceiveFilter_ImageTypes != null && ReceiveFilter_SeriesDescription != null;
+                    ReceiveFilter_ImageTypes != null
+                    || ReceiveFilter_SeriesDescription != null;
             }
         }
 
@@ -842,10 +835,14 @@ namespace server
 
             if (!String.IsNullOrWhiteSpace(concatenatedFilterString))
             {
+                Trace.WriteLine("Building filter for:" + concatenatedFilterString);
+
                 var filters = concatenatedFilterString.Split(';');
 
                 foreach (var filter in filters)
                 {
+                    Trace.WriteLine("Building filter based on :" + filter);
+
                     var expression = new Regex(Settings.Default.ReceiveFilter_ImageType,
                                                RegexOptions.Compiled | RegexOptions.Singleline);
 
