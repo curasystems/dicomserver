@@ -70,13 +70,19 @@
     <Reference Include="Dicom, Version=0.9.6.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\refs\Dicom.dll</HintPath>
     </Reference>
+    <Reference Include="dropkick">
+      <HintPath>..\packages\dropkick.0.3.8.0\lib\dropkick.dll</HintPath>
+    </Reference>
     <Reference Include="NLog, Version=1.0.0.505, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\refs\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -86,6 +92,19 @@
   <ItemGroup>
     <Compile Include="AEInfo.cs" />
     <Compile Include="CImageServer.cs" />
+    <Compile Include="DeploymentSettings.cs" />
+    <Compile Include="DicomService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DicomService.Designer.cs">
+      <DependentUpon>DicomService.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ProjectInstaller.Designer.cs">
+      <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </Compile>
     <Compile Include="SeriesQueries.cs" />
     <Compile Include="DateTimeRangeQuery.cs" />
     <Compile Include="MedicalIS.designer.cs">
@@ -102,6 +121,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="StudyQueries.cs" />
+    <Compile Include="TheDeployment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
@@ -115,10 +135,13 @@
       <LastGenOutput>MedicalIS.designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="settings\js.template" />
+    <None Include="settings\servermaps.template" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{3259AA49-8AA1-44D3-9025-A0B520596A8C}" />
@@ -127,6 +150,9 @@
     <None Include="MedicalIS.dbml.layout">
       <DependentUpon>MedicalIS.dbml</DependentUpon>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ProjectInstaller.resx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
