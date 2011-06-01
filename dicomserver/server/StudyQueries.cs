@@ -46,7 +46,13 @@ namespace server
             if (String.IsNullOrWhiteSpace(patientNameDicomFormatted))
                 return allMatch;
 
-            var lName = patientNameDicomFormatted.Split(new[] { ',' });
+            string[] lName;
+
+            if (patientNameDicomFormatted.Contains("[^]"))
+                lName = patientNameDicomFormatted.Split(new[] {"[^]"}, StringSplitOptions.None);
+            else 
+                lName = patientNameDicomFormatted.Split(new[] {','});
+            
             var firstName = "";
             var lastName = "";
 
