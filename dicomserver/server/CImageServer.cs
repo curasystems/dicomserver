@@ -493,7 +493,7 @@ namespace server
 
             if (imageTypes.Any( t => IsFilteredOut(t, ReceiveFilter_ImageTypes)))
             { 
-                Trace.WriteLine(String.Format("{0} Filtered DIMSE {1} from {2} because of imageType:{3}", DateTime.Now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE, imageType));
+                Trace.WriteLine(String.Format("{0} Filtered DIMSE {1} from {2} because of imageType:{3}", DateTime.Now, dataset.GetString(DicomTags.Modality, "UN"), this.Associate.CallingAE, imageTypes));
                 return true;
             }
 
