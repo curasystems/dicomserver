@@ -118,10 +118,10 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10005")]
-        public int ListenPort {
+        [global::System.Configuration.DefaultSettingValueAttribute("104")]
+        public string ListenPorts {
             get {
-                return ((int)(this["ListenPort"]));
+                return ((string)(this["ListenPorts"]));
             }
         }
         
@@ -194,6 +194,24 @@ namespace server.Properties {
         public bool ReceiveFilter_Keep {
             get {
                 return ((bool)(this["ReceiveFilter_Keep"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DoAllowFind {
+            get {
+                return ((bool)(this["DoAllowFind"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DoAllowStore {
+            get {
+                return ((bool)(this["DoAllowStore"]));
             }
         }
     }

@@ -167,11 +167,16 @@ namespace server
             foreach (DcmPresContext pc in association.GetPresentationContexts())
             {
                 HandleEchoAssociationRequest(pc);
-                HandleFindAssociationRequest(pc);
-                HandleMoveAssociationRequest(pc);
+
+                if (Settings.Default.DoAllowFind) 
+                {
+                    HandleFindAssociationRequest(pc);
+                    HandleMoveAssociationRequest(pc);
+                }
             }
 
-            HandleStoreAssociationRequest(association);
+            if( Settings.Default.DoAllowStore )
+                HandleStoreAssociationRequest(association);
 
             SendAssociateAccept(association);
         }

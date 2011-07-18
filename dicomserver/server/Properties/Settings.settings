@@ -37,8 +37,8 @@
     <Setting Name="AnonymizedAETs" Type="System.String" Scope="Application">
       <Value Profile="(Default)">OsiriX-Test</Value>
     </Setting>
-    <Setting Name="ListenPort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">10005</Value>
+    <Setting Name="ListenPorts" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">104</Value>
     </Setting>
     <Setting Name="StandardReceiveFolder" Type="System.String" Scope="Application">
       <Value Profile="(Default)">C:\Receive</Value>
@@ -62,6 +62,12 @@
       <Value Profile="(Default)">C:\Receive.Filtered</Value>
     </Setting>
     <Setting Name="ReceiveFilter_Keep" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DoAllowFind" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DoAllowStore" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>

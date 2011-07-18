@@ -32,17 +32,37 @@ namespace server
 
         protected override void OnStart(string[] args)
         {
-
             server = new DcmServer<CImageServer>();
         
             //server.OnDicomClientCreated = (a, s, t) => { s.ThrottleSpeed = 0; };
+            
+            ConfigureServerToListenOnAllPorts();
 
-            server.AddPort(Settings.Default.ListenPort, DcmSocketType.TCP);
             server.Start();
+
+            LogStartup();
+        }
+
+        void LogStartup()
+        {
             if (isRunningOnConsole)
-                Console.WriteLine("Listening on " + Settings.Default.ListenPort);
+                Console.WriteLine("Listening on " + Settings.Default.ListenPorts);
             else
-                Trace.WriteLine("Listening on " + Settings.Default.ListenPort);
+                Trace.WriteLine("Listening on " + Settings.Default.ListenPorts);
+        }
+
+        void ConfigureServerToListenOnAllPorts()
+        {
+            var listenPorts = GetListenPorts();
+            
+            foreach( var p in listenPorts )
+                server.AddPort(p, DcmSocketType.TCP);
+        }
+
+        static IEnumerable<ushort> GetListenPorts()
+        {
+            var setting = Settings.Default.ListenPorts ?? "104";
+            return from p in setting.Split(',', ';') select UInt16.Parse(p);
         }
 
         protected override void OnStop()
