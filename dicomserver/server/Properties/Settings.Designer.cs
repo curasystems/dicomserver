@@ -118,15 +118,6 @@ namespace server.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("104")]
-        public string ListenPorts {
-            get {
-                return ((string)(this["ListenPorts"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\Receive")]
         public string StandardReceiveFolder {
             get {
@@ -212,6 +203,33 @@ namespace server.Properties {
         public bool DoAllowStore {
             get {
                 return ((bool)(this["DoAllowStore"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("ISO_IR 100")]
+        public string OverrideCharacterSet {
+            get {
+                return ((string)(this["OverrideCharacterSet"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("^")]
+        public char PatientNameSplitCharacterForFind {
+            get {
+                return ((char)(this["PatientNameSplitCharacterForFind"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("104")]
+        public string ListenPorts {
+            get {
+                return ((string)(this["ListenPorts"]));
             }
         }
     }

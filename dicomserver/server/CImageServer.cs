@@ -157,7 +157,7 @@ namespace server
             Timer = Stopwatch.StartNew();
 
             association.NegotiateAsyncOps = false;
-
+            
             LogID = association.CallingAE;
 
             Console.WriteLine("{0} Received Association Request from AE:{1} -> {2}", DateTime.Now, association.CallingAE, association.CalledAE );
@@ -257,6 +257,9 @@ namespace server
             Trace.WriteLine(String.Format("{0} Receive C-Find from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
             Trace.WriteLine(query.Dump());
             
+            if( ! String.IsNullOrWhiteSpace(Settings.Default.OverrideCharacterSet) )
+                query.SpecificCharacterSetEncoding = DcmEncoding.GetEncodingForSpecificCharacterSet(Settings.Default.OverrideCharacterSet);
+
             using( var database = new MedicalISDataContext() )
             {
                 var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);

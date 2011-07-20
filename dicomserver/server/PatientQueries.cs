@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Dicom.Data;
+using server.Properties;
 
 namespace server
 {
@@ -92,7 +93,12 @@ namespace server
             if (String.IsNullOrWhiteSpace(patientNameDicomFormatted))
                 return allMatch;
 
-            var lName = patientNameDicomFormatted.Split(new[] { ',' });
+            var splitCharacter = Settings.Default.PatientNameSplitCharacterForFind;
+
+            if (!patientNameDicomFormatted.Contains(splitCharacter))
+                splitCharacter = ',';
+
+            var lName = patientNameDicomFormatted.Split(new[] { splitCharacter });
             var firstName = "";
             var lastName = "";
 
