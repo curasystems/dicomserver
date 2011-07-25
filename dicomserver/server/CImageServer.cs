@@ -254,13 +254,12 @@ namespace server
 
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset query)
         {
+            InterpretStringsInDatasetUsingCorrectEncoding(query);
+
             Trace.WriteLine(String.Format("{0} Receive C-Find from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
             Trace.WriteLine(query.Dump());
             
-            if( ! String.IsNullOrWhiteSpace(Settings.Default.OverrideCharacterSet) )
-                query.SpecificCharacterSetEncoding = DcmEncoding.GetEncodingForSpecificCharacterSet(Settings.Default.OverrideCharacterSet);
-
-            using( var database = new MedicalISDataContext() )
+           using( var database = new MedicalISDataContext() )
             {
                 var queryLevel = query.GetString(DicomTags.QueryRetrieveLevel, null);
 
@@ -393,6 +392,16 @@ namespace server
 
                 SendCFindResponse(presentationID, messageID, DcmStatus.Success);
             }
+        }
+
+        void InterpretStringsInDatasetUsingCorrectEncoding(DcmDataset query)
+        {
+            if (String.IsNullOrWhiteSpace(Settings.Default.OverrideCharacterSet))
+                return;
+
+            var encodingToUse = DcmEncoding.GetEncodingForSpecificCharacterSet(Settings.Default.OverrideCharacterSet);
+            
+            query.ReinterpretUsingEncoding( encodingToUse );
         }
 
         protected override void OnReceiveCStoreRequest(byte presentationID, ushort messageID, DicomUID affectedInstance,
