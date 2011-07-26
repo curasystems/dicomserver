@@ -254,7 +254,7 @@ namespace server
 
         protected override void OnReceiveCFindRequest(byte presentationID, ushort messageID, DcmPriority priority, Dicom.Data.DcmDataset query)
         {
-            InterpretStringsInDatasetUsingCorrectEncoding(query);
+            TryInterpretStringsInDatasetUsingCorrectEncoding(query);
 
             Trace.WriteLine(String.Format("{0} Receive C-Find from {1} (marked as anonymous:{2})", DateTime.Now, this.Associate.CallingAE, _flagAnonymousAccess));
             Trace.WriteLine(query.Dump());
@@ -348,9 +348,18 @@ namespace server
                         response.AddElementWithValue(DicomTags.NumberOfStudyRelatedSeries, currentStudy.Series.Count);
                         response.AddElementWithValue(DicomTags.NumberOfStudyRelatedInstances, (from s in currentStudy.Series select s.Images.Count).Sum());
 
+                        if (! String.IsNullOrEmpty(query.GetString(DicomTags.PatientsSex, null)))
+                        {
+                            response.AddElementWithValue(DicomTags.PatientsSex, Settings.Default.AlwaysRespondWithGender);
+                        }
+
+
                         if(_flagAnonymousAccess)
                             AnonymizeDatasetBasedOnStudyInfo(response);
 
+                        Trace.WriteLine("response  (STUDY): > ");
+                        Trace.WriteLine(response.Dump());
+                        
                         SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
                     }
                 }
@@ -383,14 +392,23 @@ namespace server
                         response.AddElementWithValue(DicomTags.ReferringPhysiciansName, "");
                         response.AddElementWithValue(DicomTags.StudyCommentsRETIRED, "");
 
-                        Trace.WriteLine("response > ");
-                        Trace.WriteLine(response.Dump());
-
                         SendCFindResponse(presentationID, messageID, response, DcmStatus.Pending);
                     }
                 }
 
                 SendCFindResponse(presentationID, messageID, DcmStatus.Success);
+            }
+        }
+
+        void TryInterpretStringsInDatasetUsingCorrectEncoding(DcmDataset query)
+        {
+            try
+            {
+                InterpretStringsInDatasetUsingCorrectEncoding(query);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(String.Format("Exception reinterpreting query: {0}", ex));
             }
         }
 

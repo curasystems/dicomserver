@@ -61,9 +61,6 @@
     <Setting Name="ReceiveFilter_Keep" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="DoAllowFind" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
     <Setting Name="DoAllowStore" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>
     </Setting>
@@ -71,10 +68,19 @@
       <Value Profile="(Default)">ISO_IR 100</Value>
     </Setting>
     <Setting Name="PatientNameSplitCharacterForFind" Type="System.Char" Scope="Application">
-      <Value Profile="(Default)">^</Value>
+      <Value Profile="(Default)">,</Value>
     </Setting>
     <Setting Name="ListenPorts" Type="System.String" Scope="Application">
       <Value Profile="(Default)">104</Value>
+    </Setting>
+    <Setting Name="DoAllowFind" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="MirrorQueryGenderInResponse" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlwaysRespondWithGender" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">O</Value>
     </Setting>
   </Settings>
 </SettingsFile>

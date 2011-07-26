@@ -93,12 +93,16 @@ namespace server
             if (String.IsNullOrWhiteSpace(patientNameDicomFormatted))
                 return allMatch;
 
-            var splitCharacter = Settings.Default.PatientNameSplitCharacterForFind;
+            string[] lName;
 
-            if (!patientNameDicomFormatted.Contains(splitCharacter))
-                splitCharacter = ',';
+            if (patientNameDicomFormatted.Contains("[^]"))
+                lName = patientNameDicomFormatted.Split(new[] { "[^]" }, StringSplitOptions.None);
+            else if (patientNameDicomFormatted.Contains("^"))
+                lName = patientNameDicomFormatted.Split(new[] { "^" }, StringSplitOptions.None);
+            else
+                lName = patientNameDicomFormatted.Split(new[] { Properties.Settings.Default.PatientNameSplitCharacterForFind });
+         
 
-            var lName = patientNameDicomFormatted.Split(new[] { splitCharacter });
             var firstName = "";
             var lastName = "";
 
@@ -108,14 +112,14 @@ namespace server
             if (lName.Length >= 2)
             {
                 firstName = lName[1];
-                firstName = firstName.TrimEnd('*');
+                firstName = firstName.TrimEnd('*').Trim();
                 firstName = firstName.Replace('*', '%');
             }
 
             if (lName.Length >= 1)
             {
                 lastName = lName[0];
-                lastName = lastName.TrimEnd('*');
+                lastName = lastName.TrimEnd('*').Trim();
                 lastName = lastName.Replace('*', '%');
             }
 
