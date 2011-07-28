@@ -7,7 +7,7 @@ namespace cmove
 {
     public class DicomStudyMover
     {
-        const string _callingAE = "CURACLIENT";
+        const string _callingAE = "CURAPACS";
         string _serverAE = "CURAPACS";
         IPEndPoint _serverAddress;
 
@@ -47,18 +47,27 @@ namespace cmove
 
         public void TransferStudy(string studyUid, string targetAE)
         {
+            Console.WriteLine("Initiating C-MOVE of {0} from {1} to {2}...", studyUid, _serverAddress, targetAE);
+
             var moveClient = new CMoveClient();
             moveClient.DestinationAE = targetAE;
             moveClient.CallingAE = _callingAE;
             moveClient.CalledAE = _serverAE;
-            moveClient.AddQuery(DcmQueryRetrieveLevel.Study, studyUid);
 
+            moveClient.AddQuery(DcmQueryRetrieveLevel.Study, studyUid);
+            
             moveClient.OnCMoveResponse += (query, dataset, status, remain, complete, warning, failure) =>
                 {
-                    Console.Clear();
-
                     if (status == DcmStatus.Pending)
-                        Console.WriteLine("{0}/{1} (warn:{2}, fail:{3})", complete, remain, warning, failure);
+                    {
+                        double progress = (double) complete / (double)(complete + remain);
+
+                        Console.WriteLine("%{4} - {0}/{1} (warn:{2}, fail:{3})", complete, remain, warning, failure, GetAsciiArtForProgress(progress, 10));
+
+                        Console.CursorVisible = false;
+                        Console.CursorLeft = 0;
+                        Console.CursorTop -= 1;
+                    }
                     else if (status == DcmStatus.Success)
                     {
                         Console.WriteLine("{0}/{1} (warn:{2}, fail:{3})", complete, remain, warning, failure);
@@ -68,10 +77,17 @@ namespace cmove
                         Console.WriteLine("Status:{0}", status);
                 };
 
-            Console.WriteLine("Initiating C-MOVE of {0} from {1} to {2}...", studyUid, _serverAddress, targetAE);
-
             moveClient.Connect(_serverAddress.Address.ToString(), _serverAddress.Port, DcmSocketType.TCP);
             moveClient.Wait();
+
+            Console.CursorVisible = true;
+        }
+
+        private object GetAsciiArtForProgress(double progress, int hashCount, char doneChar = '#', char notDoneChar = '_')
+        {
+            int hashesToShow = (int) Math.Floor(progress*hashCount);
+
+            return new String(doneChar, hashesToShow) + new string(notDoneChar, hashCount - hashesToShow);
         }
     }
 }
